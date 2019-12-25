@@ -25,9 +25,13 @@ def format_track_name(track):
 
 class Spotify:
 
-    def __init__(self, username, api_key, api_secret):
-        self.username = username
-        self.user = get_user_object(username, api_key, api_secret)
+    username = ""
+    api_key = ""
+    api_secret = ""
+
+    def __init__(self):
+        self.username = self.username
+        self.user = get_user_object(self.username, self.api_key, self.api_secret)
 
     def get_playlist_id(self, playlist_name: str):
         playlists = self.user.user_playlists(self.username)
@@ -42,7 +46,7 @@ class Spotify:
     def get_automated_playlist_id(self):
         return self.get_playlist_id("Automated Best Of")
 
-    def get_track_uris(self, tracks: [str]):
+    def get_track_uris(self, tracks):
         uris = []
         for track in tracks:
             output = self.user.search(track, limit=1, offset=0, type='track', market=None)
@@ -54,7 +58,6 @@ class Spotify:
 
         return uris
 
-    #TODO, change == 100 to be % 100 and the list has changed from previous time
     def get_songs_from_singular_playlist(self, playlist_id: int, offset: int, new_tracks: [str]):
         tracks = self.user.user_playlist_tracks(self.username,
                                                 playlist_id=playlist_id,

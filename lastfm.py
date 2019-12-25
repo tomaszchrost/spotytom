@@ -9,14 +9,17 @@ def get_user_object(username, password_hash, api_key, api_secret):
 
 
 class LastFM:
+    username = ""
+    password_hash = pylast.md5("")
+    api_key = ""
+    api_secret = ""
 
-    def __init__(self, username, password_hash, api_key, api_secret):
-        self.user = get_user_object(username, password_hash, api_key, api_secret)
+    def __init__(self):
+        self.user = get_user_object(self.username, self.password_hash, self.api_key, self.api_secret)
 
     def get_scrobble_dates(self):
         return self.user.get_weekly_chart_dates()
 
+    # returns track.item and track.weight
     def get_scrobbles(self, start_date, end_date):
         return self.user.get_weekly_track_charts(from_date=start_date, to_date=end_date)
-
-

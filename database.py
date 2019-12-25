@@ -1,15 +1,6 @@
 import mysql.connector
 
-
-def mysql_connect(username: str, password: str):
-    db = mysql.connector.connect(
-        host="localhost",
-        user=username,
-        passwd=password,
-        database="spotifybestbits"
-    )
-
-    return db
+DBNAME = "spotytom"
 
 
 def read_old_scrobble_dates(file_name: str):
@@ -33,13 +24,62 @@ def read_old_tracks(file_name: str):
         file.close()
     return track_list
 
+
+def mysql_connect(username: str, password: str):
+    db = mysql.connector.connect(
+        host="localhost",
+        user=username,
+        passwd=password)
+
+    return db
+
+
+def mysql_connect_to_db(username: str, password: str):
+    db = mysql.connector.connect(
+        host="localhost",
+        user=username,
+        passwd=password,
+        database=DBNAME)
+
+    return db
+
+
 class Database:
 
-    def __init__(self, username, password):
-        self.db = mysql_connect(username, password)
+    username = ""
+    password = ""
+
+    def __init__(self):
+        self.db = self.mysql_initialise_or_connect_db(self.username, self.password)
 
     def get_cursor(self):
         return self.db.cursor()
+
+    def initialise_db(self):
+        cursor = self.get_cursor()
+        cursor.execute("CREATE DATABASE " + DBNAME)
+        cursor.execute("CREATE TABLE scrobble_dates (start_date VARCHAR(255) NOT NULL, end_date VARCHAR(255) NOT NULL)")
+        cursor.execute("CREATE TABLE tracks (track VARCHAR(255) UNIQUE NOT NULL, play_count INT NOT NULL, in_playlist BOOLEAN NOT NULL)")
+
+    def mysql_initialise_or_connect_db(self, username: str, password: str):
+        self.db = mysql_connect(username, password)
+
+        found_db = False
+        cursor = self.get_db_list()
+
+        for dbname in cursor:
+            if dbname == DBNAME:
+                found_db = True
+
+        if not found_db:
+            self.intialise_db()
+
+        return self.db.mysql_connect_to_db(username, password)
+
+    def get_db_list(self):
+        cursor = self.get_cursor()
+        cursor.execute("SHOW DATABASES")
+        return cursor
 
     def get_scrobble_dates(self):
         cursor = self.get_cursor()
@@ -51,89 +91,39 @@ class Database:
         cursor.execute("SELECT * FROM tracks")
         return cursor.fetchall()
 
-def findNewWeeks(user):
-    weekly_dates_used = readUsedWeeklyDates()
+    def get_tracks_for_playlist(self):
+        cursor = self.get_cursor()
+        cursor.execute("SELECT * FROM tracks WHERE play_count>=5 AND in_playlist=FALSE")
+        return cursor.fetchall()
 
-    weekly_dates = getWeeklyDates(user)
+    def update_track(self, track_object):
+        cursor = self.get_cursor()
+        cursor.execute("SELECT * FROM tracks WHERE track=" + track_object[0])
+        track_check = cursor.fetchall()
 
-    weekly_dates_new = []
+        track_found = False
+        for track_to_check in track_check:
+            if track_to_check == track_object[0]:
+                track_found = True
 
-    for week in weekly_dates:
-        weekly_dates_new.append(week)
+        if track_found:
+            cursor.execute("UPDATE tracks SET play_count=play_count + " + track_object[1] +
+                           "WHERE track=" + track_object[0])
+        else:
+            sql = "INSERT INTO tracks (track, play_count, in_playlist) VALUES (%s, %s, %s)"
+            val = (track_object[0], track_object[1], track_object[2])
+            cursor.execute(sql, val)
 
-    new_weeks = []
-    weeks_found = 0
-    for week in weekly_dates_new:
-        if (week not in weekly_dates_used):
-            new_weeks.append(week)
-            weeks_found = weeks_found + 1
-    print("New weeks found: " + str(weeks_found))
-    return new_weeks
+        self.db.commit()
 
-def updateTrackFile():
-    # set user, new weeks, and current track list
-    lastfm = lastFMUser()
-    new_weeks = findNewWeeks(lastfm)
-    track_list = getTrackList()
+    def update_new_playlist_track(self, track_object):
+        cursor = self.get_cursor()
+        cursor.execute("UPDATE tracks SET in_playlist=TRUE WHERE track=" + track_object[0])
+        self.db.commit()
 
-    # reverse to make testing quicker, as only using recently
-    new_weeks.reverse()
+    def add_scrobble_dates(self, scrobble_dates):
+        cursor = self.get_cursor()
 
-    for week in new_weeks:
-
-        # get tracks for week and output how many unique tracks
-        week_tracks = lastfm.get_weekly_track_charts(from_date=week[0], to_date=week[1])
-        print("Adding " + str(len(week_tracks)) + " unique tracks")
-
-        # then grab track individually
-        for new_track in week_tracks:
-
-            # boolean if already exists
-            track_exists = False
-
-            # for each
-            for old_track_index in range(len(track_list)):
-
-                if (str(new_track.item) == str(track_list[old_track_index][0])):
-                    track_list[old_track_index] = (
-                    track_list[old_track_index][0], str(int(track_list[old_track_index][1]) + int(new_track.weight)),
-                    track_list[old_track_index][2])
-                    track_exists = True
-                    break
-
-            if not track_exists:
-                track_list.append((new_track.item, new_track.weight, "False"))
-
-        with open('dates.txt', 'a+') as file:
-            file.write('\n' + ';'.join(week))
-        file.close()
-
-        with open('tracks.txt', 'w+') as file:
-            for track in track_list:
-                try:
-                    file.write('\n' + str(track[0]) + ";" + str(track[1]) + ";" + str(track[2]))
-                except UnicodeEncodeError:
-                    print("Issue with encodng")
-            file.close()
-        print("Length of file: " + str(len(track_list)))
-        time.sleep(1)
-
-        def getSongsForPlaylist():
-            playlist_list = []
-            track_list = getTrackList()
-            for track in track_list:
-                if len(track) == 3 and track[2] == "False" and int(track[1]) >= 5:
-                    playlist_list.append(track[0])
-            return playlist_list
-
-        def setPlaylistSongsToTrue():
-            playlist_list = []
-            track_list = getTrackList()
-            for track_index in range(len(track_list)):
-                if track_list[track_index][2] == "False" and int(track_list[track_index][1]) >= 5:
-                    track_list[track_index] = (track_list[track_index][0], track_list[track_index][1], "True")
-            with open('tracks.txt', 'w+') as file:
-                for track in track_list:
-                    file.write('\n' + str(track[0]) + ";" + str(track[1]) + ";" + str(track[2]))
-                file.close()
-            print("File Saved")
+        sql = "INSERT INTO scrobble_dates (start_date, end_date) VALUES (%s, %s)"
+        val = scrobble_dates
+        cursor.execute(sql, val)
