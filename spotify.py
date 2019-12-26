@@ -1,16 +1,18 @@
 import spotipy
 import spotipy.util as util
+import communicator
+import authenticator
 
 
 def get_scope():
     return 'playlist-modify-public'
 
 
-def get_user_object(username, api_key, api_secret):
-    token = util.prompt_for_user_token(username=username,
+def get_user_object():
+    token = util.prompt_for_user_token(username=authenticator.spotify_username,
                                        scope=get_scope(),
-                                       client_id=api_key,
-                                       client_secret=api_secret,
+                                       client_id=authenticator.spotify_api_key,
+                                       client_secret=authenticator.spotify_api_secret,
                                        redirect_uri='https://open.spotify.com/')
 
     if token:
@@ -20,20 +22,16 @@ def get_user_object(username, api_key, api_secret):
 
 
 def format_track_name(track):
-    return track['artists'][0]['name'] + ' - ' + track['name'];
+    return track['artists'][0]['name'] + ' - ' + track['name']
 
 
 class Spotify:
 
-    username = ""
-    api_key = ""
-    api_secret = ""
-
     def __init__(self):
-        self.username = self.username
-        self.user = get_user_object(self.username, self.api_key, self.api_secret)
+        self.username = authenticator.spotify_username
+        self.user = get_user_object()
 
-    def get_playlist_id(self, playlist_name: str):
+    def get_playlist_id(self, playlist_name):
         playlists = self.user.user_playlists(self.username)
         playlist_id = ""
 
@@ -45,6 +43,18 @@ class Spotify:
 
     def get_automated_playlist_id(self):
         return self.get_playlist_id("Automated Best Of")
+
+    def get_track_uri(self, track):
+        uri = ""
+        output = self.user.search(track, limit=1, offset=0, type='track', market=None)
+        try:
+            uri = output["tracks"]["items"][0]["uri"]
+
+        except IndexError:
+            return
+
+        # communicator.output_uri_find(track)
+        return uri
 
     def get_track_uris(self, tracks):
         uris = []
@@ -90,7 +100,7 @@ class Spotify:
     def add_tracks(self, uri_list):
         uris = uri_list[:100]
         uri_list = uri_list[100:]
-        self.user.user_playlist_add_tracks('temp user', self.get_automated_playlist_id(), uris)
+        self.user.user_playlist_add_tracks(self.username, self.get_automated_playlist_id(), uris)
 
         if len(uri_list) != 0:
             self.add_tracks(uri_list)

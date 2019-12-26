@@ -1,44 +1,24 @@
 import mysql.connector
+import communicator
+import authenticator
 
 DBNAME = "spotytom"
 
 
-def read_old_scrobble_dates(file_name: str):
-    weekly_dates_used = []
-    with open(file_name, 'r+') as file:
-        for line in file:
-            date = line.split(";")
-            if len(date) == 2 and date != []:
-                weekly_dates_used.append((date[0], date[1].replace('\n', '')))
-        file.close()
-    return weekly_dates_used
-
-
-def read_old_tracks(file_name: str):
-    track_list = []
-    with open(file_name, 'r+') as file:
-        for line in file:
-            track = line.split(";")
-            if len(track) == 3:
-                track_list.append((track[0], track[1], track[2].replace('\n', '')))
-        file.close()
-    return track_list
-
-
-def mysql_connect(username: str, password: str):
+def mysql_connect():
     db = mysql.connector.connect(
         host="localhost",
-        user=username,
-        passwd=password)
+        user=authenticator.db_username,
+        passwd=authenticator.db_password)
 
     return db
 
 
-def mysql_connect_to_db(username: str, password: str):
+def mysql_connect_to_db():
     db = mysql.connector.connect(
         host="localhost",
-        user=username,
-        passwd=password,
+        user=authenticator.db_username,
+        passwd=authenticator.db_password,
         database=DBNAME)
 
     return db
@@ -46,35 +26,40 @@ def mysql_connect_to_db(username: str, password: str):
 
 class Database:
 
-    username = ""
-    password = ""
-
     def __init__(self):
-        self.db = self.mysql_initialise_or_connect_db(self.username, self.password)
+        self.db = self.mysql_initialise_or_connect_db()
 
     def get_cursor(self):
         return self.db.cursor()
 
     def initialise_db(self):
         cursor = self.get_cursor()
-        cursor.execute("CREATE DATABASE " + DBNAME)
+        cursor.execute("CREATE DATABASE " + DBNAME + " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+        self.db = mysql_connect_to_db()
+        cursor = self.get_cursor()
         cursor.execute("CREATE TABLE scrobble_dates (start_date VARCHAR(255) NOT NULL, end_date VARCHAR(255) NOT NULL)")
-        cursor.execute("CREATE TABLE tracks (track VARCHAR(255) UNIQUE NOT NULL, play_count INT NOT NULL, in_playlist BOOLEAN NOT NULL)")
+        cursor.execute("CREATE TABLE tracks (" +
+                       "track VARCHAR(255) UNIQUE NOT NULL," +
+                       "play_count INT NOT NULL," +
+                       "to_be_added BOOLEAN NOT NULL DEFAULT FALSE," +
+                       "in_playlist BOOLEAN NOT NULL DEFAULT FALSE," +
+                       "spotify_uri VARCHAR(255) DEFAULT NULL" +
+                       ")")
 
-    def mysql_initialise_or_connect_db(self, username: str, password: str):
-        self.db = mysql_connect(username, password)
+    def mysql_initialise_or_connect_db(self):
+        self.db = mysql_connect()
 
         found_db = False
         cursor = self.get_db_list()
 
         for dbname in cursor:
-            if dbname == DBNAME:
+            if dbname[0] == DBNAME:
                 found_db = True
 
         if not found_db:
-            self.intialise_db()
+            self.initialise_db()
 
-        return self.db.mysql_connect_to_db(username, password)
+        return mysql_connect_to_db()
 
     def get_db_list(self):
         cursor = self.get_cursor()
@@ -93,37 +78,51 @@ class Database:
 
     def get_tracks_for_playlist(self):
         cursor = self.get_cursor()
-        cursor.execute("SELECT * FROM tracks WHERE play_count>=5 AND in_playlist=FALSE")
+        cursor.execute("SELECT * FROM tracks WHERE to_be_added=TRUE AND in_playlist=FALSE AND spotify_uri IS NOT NULL")
+        return cursor.fetchall()
+
+    def get_tracks_for_uris(self):
+        cursor = self.get_cursor()
+        cursor.execute("SELECT * FROM tracks WHERE to_be_added=TRUE AND in_playlist=FALSE AND spotify_uri IS NULL")
         return cursor.fetchall()
 
     def update_track(self, track_object):
         cursor = self.get_cursor()
-        cursor.execute("SELECT * FROM tracks WHERE track=" + track_object[0])
-        track_check = cursor.fetchall()
 
-        track_found = False
-        for track_to_check in track_check:
-            if track_to_check == track_object[0]:
-                track_found = True
+        cursor.execute("INSERT INTO tracks SET track = '" + track_object[0]
+                       +"', play_count = " + str(track_object[1])
+                       + " ON DUPLICATE KEY UPDATE play_count=play_count+" + str(track_object[1]))
+        self.db.commit()
+        # communicator.output_track_to_db(track_object[0])
 
-        if track_found:
-            cursor.execute("UPDATE tracks SET play_count=play_count + " + track_object[1] +
-                           "WHERE track=" + track_object[0])
-        else:
-            sql = "INSERT INTO tracks (track, play_count, in_playlist) VALUES (%s, %s, %s)"
-            val = (track_object[0], track_object[1], track_object[2])
-            cursor.execute(sql, val)
+    def update_track_from_playlist(self, track_name):
+        cursor = self.get_cursor()
 
+        cursor.execute("INSERT INTO tracks SET track = '" + str(track_name)
+                       +"', play_count = 0"
+                       + " ON DUPLICATE KEY UPDATE to_be_added=TRUE")
+        self.db.commit()
+        # communicator.output_track_to_db(track_name)
+
+    def update_to_be_added_playlist(self):
+        cursor = self.get_cursor()
+        cursor.execute("UPDATE tracks SET to_be_added=TRUE WHERE play_count >= 5")
         self.db.commit()
 
     def update_new_playlist_track(self, track_object):
         cursor = self.get_cursor()
-        cursor.execute("UPDATE tracks SET in_playlist=TRUE WHERE track=" + track_object[0])
+        cursor.execute("UPDATE tracks SET in_playlist=TRUE WHERE track='" + str(track_object) + "'")
         self.db.commit()
 
-    def add_scrobble_dates(self, scrobble_dates):
+    def add_track_uri(self, track_name, uri):
+        cursor = self.get_cursor()
+        cursor.execute("UPDATE tracks SET spotify_uri='" + uri + "' WHERE track='" + str(track_name) + "'")
+        self.db.commit()
+
+    def add_scrobble_date(self, scrobble_date):
         cursor = self.get_cursor()
 
         sql = "INSERT INTO scrobble_dates (start_date, end_date) VALUES (%s, %s)"
-        val = scrobble_dates
+        val = (scrobble_date[0], scrobble_date[1])
         cursor.execute(sql, val)
+        self.db.commit()

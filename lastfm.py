@@ -1,21 +1,18 @@
 import pylast
+import authenticator
 
 
-def get_user_object(username, password_hash, api_key, api_secret):
-    return pylast.LastFMNetwork(api_key=api_key,
-                                api_secret=api_secret,
-                                username=username,
-                                password_hash=password_hash).get_authenticated_user()
+def get_user_object():
+    return pylast.LastFMNetwork(api_key=authenticator.lastfm_api_key,
+                                api_secret=authenticator.lastfm_api_secret,
+                                username=authenticator.lastfm_username,
+                                password_hash=authenticator.lastfm_password).get_authenticated_user()
 
 
 class LastFM:
-    username = ""
-    password_hash = pylast.md5("")
-    api_key = ""
-    api_secret = ""
 
     def __init__(self):
-        self.user = get_user_object(self.username, self.password_hash, self.api_key, self.api_secret)
+        self.user = get_user_object()
 
     def get_scrobble_dates(self):
         return self.user.get_weekly_chart_dates()
