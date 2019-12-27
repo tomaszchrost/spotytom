@@ -2,10 +2,11 @@ import spotipy
 import spotipy.util as util
 import communicator
 import authenticator
+import random
 
 
 def get_scope():
-    return 'playlist-modify-public'
+    return 'playlist-modify-public streaming user-read-currently-playing'
 
 
 def get_user_object():
@@ -104,3 +105,36 @@ class Spotify:
 
         if len(uri_list) != 0:
             self.add_tracks(uri_list)
+
+    def get_related_artists(self, artist_id):
+        return self.user.artist_related_artists(artist_id)['artists']
+
+    def get_random_related_artist_unique(self, artist_id, artist_array):
+        related_artist = self.get_related_artists(artist_id)
+        artist_count = len(related_artist)
+        artist_to_return = related_artist[random.randint(0, artist_count - 1)]['uri']
+        while artist_to_return in artist_array:
+            artist_to_return = related_artist[random.randint(0, artist_count - 1)]['uri']
+        return artist_to_return
+
+    def get_artists_top_tracks(self, artist_id):
+        return self.user.artist_top_tracks(artist_id)['tracks']
+
+    def get_random_artist_track(self, artist_id):
+        tracks = self.get_artists_top_tracks(artist_id)
+        track_count = len(tracks)
+        return tracks[random.randint(0, track_count - 1)]['uri']
+
+    def get_artist_playing(self):
+        return self.user._get("me/player/currently-playing")['item']['artists'][0]['uri']
+
+    def get_track_playing(self):
+        return self.user._get("me/player/currently-playing")['item']['uri']
+
+    def add_tracks_to_playback(self, track_uris):
+        payload = {"uris": track_uris, "offset": {"position": 0}}
+        return self.user._put("me/player/play", payload=payload)
+
+
+
+
