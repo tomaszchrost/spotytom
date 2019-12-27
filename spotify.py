@@ -117,13 +117,26 @@ class Spotify:
             artist_to_return = related_artist[random.randint(0, artist_count - 1)]['uri']
         return artist_to_return
 
-    def get_artists_top_tracks(self, artist_id):
-        return self.user.artist_top_tracks(artist_id)['tracks']
+    def get_artists_tracks(self, artist_id):
+        albums = self.user.artist_albums(artist_id)
+        album_uris = []
+        for album in albums['items']:
+            album_uris.append(album['uri'])
+
+        track_items = []
+        for album_uri in album_uris:
+            track_items.extend(self.user.album_tracks(album_uri)['items'])
+
+        track_uris = []
+        for track_item in track_items:
+            track_uris.append(track_item['uri'])
+
+        return track_uris
 
     def get_random_artist_track(self, artist_id):
-        tracks = self.get_artists_top_tracks(artist_id)
-        track_count = len(tracks)
-        return tracks[random.randint(0, track_count - 1)]['uri']
+        track_uris = self.get_artists_tracks(artist_id)
+        track_count = len(track_uris)
+        return track_uris[random.randint(0, track_count - 1)]
 
     def get_artist_playing(self):
         return self.user._get("me/player/currently-playing")['item']['artists'][0]['uri']
