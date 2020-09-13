@@ -1,14 +1,16 @@
 import spotipy
 import spotipy.util as util
-import communicator
 import authenticator
 import random
+import scrobble_objects
 
 
+# get scope we need to access Spotify
 def get_scope():
     return 'playlist-modify-public streaming user-read-currently-playing'
 
 
+# get user object to connect
 def get_user_object():
     token = util.prompt_for_user_token(username=authenticator.spotify_username,
                                        scope=get_scope(),
@@ -22,16 +24,50 @@ def get_user_object():
     return False
 
 
-def format_track_name(track):
+# get track name in a similar style to how represented in db
+def get_track_name(track):
     return track['artists'][0]['name'] + ' - ' + track['name']
 
 
+# get track uri from track object
+def get_track_uri(track):
+    return track['uri']
+
+
+# return SpotifySong class from playlist array
+def playlist_array_to_spotify_song_objects(playlist_array):
+    spotify_song_objects = []
+    for i, item in enumerate(playlist_array['items']):
+        track = item['track']
+        spotify_song_objects.append(SpotifySong(track))
+    return spotify_song_objects
+
+
+# class to store information currently useful on a spotify song
+class SpotifySong:
+
+    def __init__(self, spotify_track):
+        self.track_name = get_track_name(spotify_track)
+        self.spotify_uri = get_track_uri(spotify_track)
+
+        self.check_for_unwanted_characters()
+
+    def check_for_unwanted_characters(self):
+        self.track_name = self.track_name.replace("…", "...")
+
+
+# class for Spotify instance
 class Spotify:
 
     def __init__(self):
         self.username = authenticator.spotify_username
         self.user = get_user_object()
 
+    # ------------------------------------------------------------------------------------------------------------
+    # best of playlist functions
+    # ------------------------------------------------------------------------------------------------------------
+
+    # get playlist id from it's name
     def get_playlist_id(self, playlist_name):
         playlists = self.user.user_playlists(self.username)
         playlist_id = ""
@@ -42,62 +78,62 @@ class Spotify:
 
         return playlist_id
 
+    # get name of the automated playlist maintained by spotytom
     def get_automated_playlist_id(self):
         return self.get_playlist_id("Automated Best Of")
 
-    def get_track_uri(self, track):
-        uri = ""
+    # get uri from a track name
+    def get_track_uri_from_track_name(self, track):
         output = self.user.search(track, limit=1, offset=0, type='track', market=None)
         try:
-            uri = output["tracks"]["items"][0]["uri"]
+            uri = get_track_uri(output["tracks"]["items"][0])
 
         except IndexError:
             return
 
-        # communicator.output_uri_find(track)
         return uri
 
-    def get_track_uris(self, tracks):
-        uris = []
-        for track in tracks:
-            output = self.user.search(track, limit=1, offset=0, type='track', market=None)
-            try:
-                uris.append(output["tracks"]["items"][0]["uri"])
+    # get songs from playlist id
+    def get_songs_from_singular_playlist(self, playlist_id: int):
+        new_tracks = []
+        offset = 0
+        finished_getting_tracks = False
+        while not finished_getting_tracks:
+            tracks = self.user.user_playlist_tracks(self.username,
+                                                    playlist_id=playlist_id,
+                                                    fields='items',
+                                                    limit=100,
+                                                    offset=offset)
 
-            except IndexError:
-                print("Error with: " + track)
+            new_tracks.extend(playlist_array_to_spotify_song_objects(tracks))
+            # not max number, so must be the end
+            if len(tracks['items']) != 100:
+                finished_getting_tracks = True
+            else:
+                offset += 100
+        return new_tracks
 
-        return uris
+    # get songs from all playlists from user that aren't maintained by spotytom
+    def get_songs_from_playlists(self):
+        new_tracks = []
+        offset = 0
+        finished_getting_tracks = False
+        while not finished_getting_tracks:
+            playlists = self.user.user_playlists(self.username, limit=50, offset=offset)
 
-    def get_songs_from_singular_playlist(self, playlist_id: int, offset: int, new_tracks: [str]):
-        tracks = self.user.user_playlist_tracks(self.username,
-                                                playlist_id=playlist_id,
-                                                fields='items',
-                                                limit=100,
-                                                offset=offset)
+            for playlist in playlists['items']:
+                if playlist['owner']['id'] == self.username and playlist['name'] != "Automated Best Of":
+                    playlist_tracks = self.get_songs_from_singular_playlist(playlist['id'])
+                    new_tracks.extend(playlist_tracks)
 
-        for i, item in enumerate(tracks['items']):
-            track = item['track']
-            new_tracks.append(format_track_name(track))
-
-        if len(tracks['items']) == 100:
-            self.get_songs_from_singular_playlist(playlist_id, offset + 100, new_tracks)
+            if len(playlists['items']) != 50:
+                finished_getting_tracks = True
+            else:
+                offset += 50
 
         return new_tracks
 
-    def get_songs_from_playlists(self, offset: int, new_tracks: [str]):
-        playlists = self.user.user_playlists(self.username, limit=50, offset=offset)
-
-        for playlist in playlists['items']:
-            if playlist['owner']['id'] == self.username and playlist['name'] != "Automated Best Of":
-                playlist_tracks = self.get_songs_from_singular_playlist(playlist['id'], 0, [])
-                new_tracks.extend(playlist_tracks)
-
-        if len(playlists['items']) == 50:
-            self.get_songs_from_playlists(offset + 50, new_tracks)
-
-        return new_tracks
-
+    # add tracks to automated playlist, not used as want to be able to save between uri adds
     def add_tracks(self, uri_list):
         uris = uri_list[:100]
         uri_list = uri_list[100:]
@@ -105,6 +141,18 @@ class Spotify:
 
         if len(uri_list) != 0:
             self.add_tracks(uri_list)
+
+    # adds up to 100 tracks
+    def add_tracks_max_100(self, uri_list):
+        if len(uri_list) > 100:
+            print("Error, too many uris passed, max 100")
+            return
+
+        self.add_tracks(uri_list)
+
+    # ------------------------------------------------------------------------------------------------------------
+    # explore functions
+    # ------------------------------------------------------------------------------------------------------------
 
     def get_related_artists(self, artist_id):
         return self.user.artist_related_artists(artist_id)['artists']
@@ -147,7 +195,3 @@ class Spotify:
     def add_tracks_to_playback(self, track_uris):
         payload = {"uris": track_uris, "offset": {"position": 0}}
         return self.user._put("me/player/play", payload=payload)
-
-
-
-
