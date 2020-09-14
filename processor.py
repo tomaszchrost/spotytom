@@ -41,19 +41,22 @@ class Processor:
         for date in new_dates:
             new_tracks = self.lastfm.get_scrobbles(date)
             for track in new_tracks:
-                matching_tracks = [x for x in self.ScrobbleData if string_equal(x.track_name, track.track_name)]
+                matching_tracks = [x
+                                   for x in self.ScrobbleData
+                                   if string_equal(x.track_name, track.track_name)
+                                   and string_equal(x.track_artist, track.track_artist)]
                 try:
                     # find match and increase play count
                     if len(matching_tracks) == 1:
                         matching_track = matching_tracks[0]
                         matching_track.play_count += track.play_count
                         matching_track.save(self.db)
-                        print("Updated play count of " + track.track_name)
+                        print("Updated play count of " + track.track_artist + " - " + track.track_name)
                     # add new track
                     elif len(matching_tracks) == 0:
                         self.ScrobbleData.append(track)
                         track.save(self.db)
-                        print("Added new track " + track.track_name)
+                        print("Added new track " + track.track_artist + " - " + track.track_name)
                     else:
                         raise UniqueIndexException
 
@@ -66,7 +69,10 @@ class Processor:
     def update_with_new_playlist_tracks(self):
         spotify_tracks = self.spotify.get_songs_from_playlists()
         for spot_track in spotify_tracks:
-            matching_tracks = [x for x in self.ScrobbleData if string_equal(x.track_name, spot_track.track_name)]
+            matching_tracks = [x
+                               for x in self.ScrobbleData
+                               if string_equal(x.track_name, spot_track.track_name)
+                               and string_equal(x.track_artist, spot_track.track_artist)]
             try:
                 # make sure it's set to be added if not already in playlist, and update uri while available
                 if len(matching_tracks) == 1:
@@ -75,16 +81,17 @@ class Processor:
                         matching_track.to_be_added = True
                         matching_track.spotify_uri = spot_track.spotify_uri
                         matching_track.save(self.db)
-                        print(matching_track.track_name + " set to be added to playlist")
+                        print(matching_track.track_artist + " - " + matching_track.track_name + " set to be added to playlist")
                 # add new track, already to be added to playlist and update uri while available
                 elif len(matching_tracks) == 0:
                     new_scrobble_track = scrobble_objects.ScrobbleTrack(
+                        track_artist=spot_track.track_artist,
                         track_name=spot_track.track_name,
                         to_be_added=True,
                         spotify_uri=spot_track.spotify_uri)
                     self.ScrobbleData.append(new_scrobble_track)
                     new_scrobble_track.save(self.db)
-                    print("Added new track " + new_scrobble_track.track_name)
+                    print("Added new track " + new_scrobble_track.track_artist + " - " + new_scrobble_track.track_name)
 
                 else:
                     raise UniqueIndexException
@@ -98,18 +105,18 @@ class Processor:
             if not track.to_be_added and not track.in_playlist and track.play_count >= play_count_to_be_added:
                 track.to_be_added = True
                 track.save(self.db)
-                print(track.track_name + " set to be added to playlist")
+                print(track.track_artist + " - " + track.track_name + " set to be added to playlist")
 
     # update uris of tracks to be added
     def update_uris(self):
         for track in self.ScrobbleData:
             if not track.in_playlist and track.to_be_added and track.spotify_uri is None:
-                track.spotify_uri = self.spotify.get_track_uri_from_track_name(track.track_name)
+                track.spotify_uri = self.spotify.get_track_uri_from_track_name(track.track_artist + " " + track.track_name)
                 if track.spotify_uri is None:
                     track.spotify_uri = "FAILED"
-                    print("URI Error for " + track.track_name)
+                    print("URI Error for " + track.track_artist + " - " + track.track_name)
                 else:
-                    print("URI updated for " + track.track_name)
+                    print("URI updated for " + track.track_artist + " - " + track.track_name)
                 track.save(self.db)
 
     def recursive_add_tracks(self, scrobble_track_list):

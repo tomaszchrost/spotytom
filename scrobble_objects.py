@@ -37,19 +37,23 @@ class ScrobbleDate:
         return self.end_date
 
 
-# format track name to double ', can't remember why I needed this
 def format_track_name(track_name):
-    return str(track_name).replace("'", "''")
+    # i don't think this is necessary anymore
+    #return str(track_name).replace("'", "''")
+    return str(track_name).split(" - ", 1)
 
 
 # object for ScrobbleTrack
 class ScrobbleTrack:
 
-    def __init__(self, lastfm_track=None, track_name=None, play_count=0, to_be_added=False, in_playlist=False, spotify_uri=None):
+    def __init__(self, lastfm_track=None, track_artist=None, track_name=None, play_count=0, to_be_added=False, in_playlist=False, spotify_uri=None):
         if lastfm_track is not None:
-            self.track_name = format_track_name(lastfm_track.item)
+            formatted_track = format_track_name(lastfm_track.item)
+            self.track_artist = formatted_track[0]
+            self.track_name = formatted_track[1]
             self.play_count = lastfm_track.weight
         else:
+            self.track_artist = track_artist
             self.track_name = track_name
             self.play_count = play_count
         self.to_be_added = bool(to_be_added)
@@ -62,4 +66,7 @@ class ScrobbleTrack:
         db.save_scrobble_track(self)
 
     def check_for_unwanted_characters(self):
+        self.track_artist = self.track_artist.replace("…", "...")
+        self.track_artist = self.track_artist.replace("’", "'")
         self.track_name = self.track_name.replace("…", "...")
+        self.track_name = self.track_name.replace("’", "'")

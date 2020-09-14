@@ -24,9 +24,12 @@ def get_user_object():
     return False
 
 
-# get track name in a similar style to how represented in db
+def get_track_artist(track):
+    return track['artists'][0]['name']
+
+
 def get_track_name(track):
-    return track['artists'][0]['name'] + ' - ' + track['name']
+    return track['name']
 
 
 # get track uri from track object
@@ -47,13 +50,17 @@ def playlist_array_to_spotify_song_objects(playlist_array):
 class SpotifySong:
 
     def __init__(self, spotify_track):
+        self.track_artist = get_track_artist(spotify_track)
         self.track_name = get_track_name(spotify_track)
         self.spotify_uri = get_track_uri(spotify_track)
 
         self.check_for_unwanted_characters()
 
     def check_for_unwanted_characters(self):
+        self.track_artist = self.track_artist.replace("…", "...")
+        self.track_artist = self.track_artist.replace("’", "'")
         self.track_name = self.track_name.replace("…", "...")
+        self.track_name = self.track_name.replace("’", "'")
 
 
 # class for Spotify instance

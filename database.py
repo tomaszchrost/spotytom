@@ -25,7 +25,6 @@ def mysql_connect_to_db():
         database=DBNAME,
         charset="utf8")
 
-
     return db
 
 
@@ -50,6 +49,7 @@ def db_scrobble_track_object(f):
         for track in db_tracks:
             scrobble_track_objects.append(
                 scrobble_objects.ScrobbleTrack(
+                    track_artist=track["track_artist"],
                     track_name=track["track_name"],
                     play_count=track["play_count"],
                     to_be_added=track["to_be_added"],
@@ -77,11 +77,13 @@ class Database:
         cursor = self.get_cursor()
         cursor.execute("CREATE TABLE scrobble_dates (start_date VARCHAR(255) NOT NULL, end_date VARCHAR(255) NOT NULL)")
         cursor.execute("CREATE TABLE scrobble_tracks (" +
-                       "track_name VARCHAR(255) UNIQUE NOT NULL," +
+                       "track_artist VARCHAR(255) NOT NULL," +
+                       "track_name VARCHAR(255) NOT NULL," +
                        "play_count INT NOT NULL," +
                        "to_be_added BOOLEAN NOT NULL DEFAULT FALSE," +
                        "in_playlist BOOLEAN NOT NULL DEFAULT FALSE," +
-                       "spotify_uri VARCHAR(255) DEFAULT NULL" +
+                       "spotify_uri VARCHAR(255) DEFAULT NULL," +
+                       "PRIMARY KEY(track_artist, track_name)"
                        ")")
 
     def mysql_initialise_or_connect_db(self):
@@ -127,12 +129,13 @@ class Database:
     def save_scrobble_track(self, scrobble_track):
         cursor = self.get_cursor()
 
-        sql = """INSERT INTO scrobble_tracks (track_name, play_count, to_be_added, in_playlist, spotify_uri) VALUES (%s, %s, %s, %s, %s)
+        sql = """INSERT INTO scrobble_tracks (track_artist, track_name, play_count, to_be_added, in_playlist, spotify_uri) VALUES (%s, %s, %s, %s, %s, %s)
                  ON DUPLICATE KEY UPDATE play_count=VALUES(play_count),
                                          to_be_added=VALUES(to_be_added),
                                          in_playlist=VALUES(in_playlist),
                                          spotify_uri=VALUES(spotify_uri)"""
-        val = (scrobble_track.track_name,
+        val = (scrobble_track.track_artist,
+               scrobble_track.track_name,
                scrobble_track.play_count,
                scrobble_track.to_be_added,
                scrobble_track.in_playlist,
