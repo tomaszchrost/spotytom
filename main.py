@@ -1,6 +1,5 @@
 from processor import Processor
 
-
 def main():
     controller = Processor()
     print("Updating Best Of Playlist...")

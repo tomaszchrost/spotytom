@@ -143,7 +143,6 @@ class Processor:
         tracks_to_add = []
         for track in self.ScrobbleData:
             if not track.in_playlist and track.to_be_added and track.spotify_uri is not None and track.spotify_uri != "FAILED":
-                # get uri if for some reason we still don't
                 tracks_to_add.append(track)
 
         self.recursive_add_tracks(tracks_to_add)
