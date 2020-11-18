@@ -21,10 +21,10 @@ def string_equal(str1, str2):
 class Processor:
 
     # initialise other classes
-    def __init__(self):
-        self.lastfm = LastFM()
-        self.spotify = Spotify()
-        self.db = Database()
+    def __init__(self, spotify_token=None, lastfm_token=None, flask_username=None, lastfm_username=None):
+        self.lastfm = LastFM(lastfm_token, lastfm_username)
+        self.spotify = Spotify(spotify_token)
+        self.db = Database(flask_username)
         self.ScrobbleData = self.db.get_scrobble_tracks()
 
     # get dates not yet added to db

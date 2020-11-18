@@ -3,6 +3,8 @@ import spotipy.util as util
 import authenticator
 import random
 import scrobble_objects
+from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyClientCredentials
 
 
 # get scope we need to access Spotify
@@ -12,16 +14,22 @@ def get_scope():
 
 # get user object to connect
 def get_user_object():
-    token = util.prompt_for_user_token(username=authenticator.spotify_username,
-                                       scope=get_scope(),
-                                       client_id=authenticator.spotify_api_key,
-                                       client_secret=authenticator.spotify_api_secret,
-                                       redirect_uri='https://open.spotify.com/')
+    auth_manager = SpotifyOAuth(
+        scope=get_scope(),
+        username=authenticator.spotify_username,
+        client_id=authenticator.SPOTIPY_CLIENT_ID,
+        client_secret=authenticator.SPOTIPY_CLIENT_SECRET,
+        redirect_uri=authenticator.SPOTIPY_REDIRECT_URI
+    )
 
-    if token:
-        return spotipy.Spotify(auth=token)
+    if auth_manager:
+        return spotipy.Spotify(auth_manager=auth_manager)
 
     return False
+
+
+def get_user_with_token(token):
+    return spotipy.Spotify(auth=token)
 
 
 def get_track_artist(track):
@@ -66,9 +74,13 @@ class SpotifySong:
 # class for Spotify instance
 class Spotify:
 
-    def __init__(self):
-        self.username = authenticator.spotify_username
-        self.user = get_user_object()
+    def __init__(self, token=None):
+        if token:
+            self.user = get_user_with_token(token)
+            self.username = self.user.me()['id']
+        else:
+            self.username = authenticator.spotify_username
+            self.user = get_user_object()
 
     # ------------------------------------------------------------------------------------------------------------
     # best of playlist functions
@@ -82,7 +94,6 @@ class Spotify:
         for playlist in playlists['items']:
             if playlist['name'] == playlist_name:
                 playlist_id = playlist['id']
-
         return playlist_id
 
     # get name of the automated playlist maintained by spotytom

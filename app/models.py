@@ -7,11 +7,13 @@ from app import login
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
 
-    spotify_username = db.Column(db.String(128))
-    lastfm_username = db.Column(db.String(128))
+    lastfm_key = db.Column(db.String(128))
+    lastfm_name = db.Column(db.String(128))
+
+    updating_playlist = db.Column(db.Boolean)
+    error_updating = db.Column(db.Boolean)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -21,6 +23,9 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def get_id(self):
+        return id
 
 
 @login.user_loader

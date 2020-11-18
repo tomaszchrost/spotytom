@@ -5,6 +5,11 @@ import scrobble_objects
 DBNAME = "spotytom"
 
 
+class TableSearchException(Exception):
+    """Raised when tables could not be found"""
+    pass
+
+
 # connect to localhost
 def mysql_connect():
     db = MySQLdb.connect(
@@ -64,8 +69,9 @@ def db_scrobble_track_object(f):
 
 class Database:
 
-    def __init__(self):
-        self.db = self.mysql_initialise_or_connect_db()
+    def __init__(self, username=None):
+        self.username = username
+        self.mysql_initialise_or_connect_db()
 
     def get_cursor(self):
         return self.db.cursor(MySQLdb.cursors.DictCursor)
@@ -74,9 +80,16 @@ class Database:
         cursor = self.get_cursor()
         cursor.execute("CREATE DATABASE " + DBNAME + " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
         self.db = mysql_connect_to_db()
+
+    def initialise_date_table(self):
+        print("executing_date_table")
         cursor = self.get_cursor()
-        cursor.execute("CREATE TABLE scrobble_dates (start_date VARCHAR(255) NOT NULL, end_date VARCHAR(255) NOT NULL)")
-        cursor.execute("CREATE TABLE scrobble_tracks (" +
+        cursor.execute(f"CREATE TABLE {self.username}_scrobble_dates (start_date VARCHAR(255) NOT NULL, end_date VARCHAR(255) NOT NULL)")
+
+    def initialise_track_table(self):
+        print("executing_track_table")
+        cursor = self.get_cursor()
+        cursor.execute(f"CREATE TABLE {self.username}_scrobble_tracks (" +
                        "track_artist VARCHAR(255) NOT NULL," +
                        "track_name VARCHAR(255) NOT NULL," +
                        "play_count INT NOT NULL," +
@@ -85,6 +98,19 @@ class Database:
                        "spotify_uri VARCHAR(255) DEFAULT NULL," +
                        "PRIMARY KEY(track_artist, track_name)"
                        ")")
+
+    def check_table_exists(self, tablename):
+        cursor = self.get_cursor()
+        cursor.execute(f"""
+            SELECT COUNT(*)
+            FROM information_schema.tables
+            WHERE table_name = '{tablename}'
+            """)
+        if cursor.fetchone()['COUNT(*)'] == 1:
+            cursor.close()
+            return True
+
+        return False
 
     def mysql_initialise_or_connect_db(self):
         self.db = mysql_connect()
@@ -99,7 +125,18 @@ class Database:
         if not found_db:
             self.initialise_db()
 
-        return mysql_connect_to_db()
+        self.db = mysql_connect_to_db()
+
+        found_date_table = self.check_table_exists(f'{self.username}_scrobble_dates')
+        found_track_table = self.check_table_exists(f'{self.username}_scrobble_tracks')
+        if not found_date_table:
+            self.initialise_date_table()
+        if not found_track_table:
+            self.initialise_track_table()
+        found_date_table = self.check_table_exists(f'{self.username}_scrobble_dates')
+        found_track_table = self.check_table_exists(f'{self.username}_scrobble_tracks')
+        if not (found_track_table and found_date_table):
+            raise TableSearchException
 
     def get_db_list(self):
         cursor = self.get_cursor()
@@ -109,19 +146,19 @@ class Database:
     @db_scrobble_date_object
     def get_scrobble_dates(self):
         cursor = self.get_cursor()
-        cursor.execute("SELECT * FROM scrobble_dates")
+        cursor.execute(f"SELECT * FROM {self.username}_scrobble_dates")
         return cursor.fetchall()
 
     @db_scrobble_track_object
     def get_scrobble_tracks(self):
         cursor = self.get_cursor()
-        cursor.execute("SELECT * FROM scrobble_tracks")
+        cursor.execute(f"SELECT * FROM {self.username}_scrobble_tracks")
         return cursor.fetchall()
 
     def save_scrobble_date(self, scrobble_date):
         cursor = self.get_cursor()
 
-        sql = "INSERT INTO scrobble_dates (start_date, end_date) VALUES (%s, %s)"
+        sql = f"INSERT INTO {self.username}_scrobble_dates (start_date, end_date) VALUES (%s, %s)"
         val = (scrobble_date.start_date, scrobble_date.end_date)
         cursor.execute(sql, val)
         self.db.commit()
@@ -129,7 +166,7 @@ class Database:
     def save_scrobble_track(self, scrobble_track):
         cursor = self.get_cursor()
 
-        sql = """INSERT INTO scrobble_tracks (track_artist, track_name, play_count, to_be_added, in_playlist, spotify_uri) VALUES (%s, %s, %s, %s, %s, %s)
+        sql = f"""INSERT INTO {self.username}_scrobble_tracks (track_artist, track_name, play_count, to_be_added, in_playlist, spotify_uri) VALUES (%s, %s, %s, %s, %s, %s)
                  ON DUPLICATE KEY UPDATE play_count=VALUES(play_count),
                                          to_be_added=VALUES(to_be_added),
                                          in_playlist=VALUES(in_playlist),
