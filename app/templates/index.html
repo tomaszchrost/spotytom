@@ -1,5 +1,35 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Hi, {{ current_user.username }}!</h1>
+
+        <div class="process">
+            <div class="process_header">
+                <div class="process_names">
+                    Update Playlist
+                </div>
+            </div>
+            <div class="process_header">
+                <div class="process_prerequisites">
+                    Prerequisites: LastFm, Spotify, Playlist Named: "Automated Best Of"
+                </div>
+            </div>
+            <div class="process_header">
+                <div class="process_actions">
+                    {% if current_user.updating_playlist %}
+                    Updating...
+                    {% elif spotify_verified and lastfm_verified %}
+                    <button onclick="window.location.href='{{ url_for('update_playlist') }}';">
+                        Update
+                    </button>
+                    {% else %}
+                    <button onclick="window.location.href='{{ url_for('update_playlist') }}';" disabled>
+                        Update
+                    </button>
+                    {% endif %}
+                    {% if current_user.error_updating %}
+                        Error updating playlist!
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 {% endblock %}

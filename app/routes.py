@@ -27,26 +27,19 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # if already authenticated
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-
     form = LoginForm()
     if form.validate_on_submit():
-        # find user object
         user = User.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash('Invalid username or password')
             return redirect(url_for('login'))
         login_user(user, remember=form.remember_me.data)
-
-        # get next page
-        session.clear()
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('index')
         return redirect(next_page)
-
     return render_template('login.html', title='Sign In', form=form)
 
 
@@ -115,20 +108,19 @@ def lastfm_callback():
 
     soup = BeautifulSoup(res.content, features="html.parser")
 
-    current_user.lastfm_key = soup.find('key').string
-    current_user.lastfm_name = soup.find('name').string
-    db.session.commit()
+    session["lastfm_key"] = soup.find('key').string
+    session["lastfm_name"] = soup.find('name').string
     return redirect(url_for("index"))
 
 
-def new_thread_update_playlist(spoty_toke, user_id):
+def new_thread_update_playlist(spoty_toke, lastfm_key, lastfm_name, user_id):
     user = User.query.get(user_id)
     try:
         processor = Processor(
             spoty_toke,
-            user.lastfm_key,
+            lastfm_key,
             user.username,
-            user.lastfm_name
+            lastfm_name
         )
         processor.update_best_of_playlist()
     except Exception as e:
@@ -148,6 +140,8 @@ def update_playlist():
     db.session.commit()
     update_thread = threading.Thread(target=new_thread_update_playlist, args=(
         session['spotify_toke'],
+        session['lastfm_key'],
+        session['lastfm_name'],
         current_user.id,
     ))
     update_thread.start()

@@ -9,11 +9,8 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     password_hash = db.Column(db.String(128))
 
-    lastfm_key = db.Column(db.String(128))
-    lastfm_name = db.Column(db.String(128))
-
-    updating_playlist = db.Column(db.Boolean)
-    error_updating = db.Column(db.Boolean)
+    updating_playlist = db.Column(db.Boolean, default=False)
+    error_updating = db.Column(db.Boolean, default=False)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
