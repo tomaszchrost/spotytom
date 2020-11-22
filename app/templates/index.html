@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-        <div class="process">
+        <div class="process" style="background-color: coral;">
             <div class="process_header">
                 <div class="process_names">
                     Update Playlist
@@ -10,7 +9,7 @@
             </div>
             <div class="process_header">
                 <div class="process_prerequisites">
-                    Prerequisites: LastFm, Spotify, Playlist Named: "Automated Best Of"
+                    Prerequisites: LastFm, Spotify, public playlist named: "Automated Best Of"
                 </div>
             </div>
             <div class="process_header">
@@ -22,12 +21,37 @@
                         Update
                     </button>
                     {% else %}
-                    <button onclick="window.location.href='{{ url_for('update_playlist') }}';" disabled>
+                    <button onclick="window.location.href='{{ url_for('update_playlist') }}';" disabled style="background-color: gray; color: lightgray">
                         Update
                     </button>
                     {% endif %}
                     {% if current_user.error_updating %}
                         Error updating playlist!
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="process" style="background-color: indianred">
+            <div class="process_header">
+                <div class="process_names">
+                    Explore Mode
+                </div>
+            </div>
+            <div class="process_header">
+                <div class="process_prerequisites">
+                    Prerequisites: Spotify
+                </div>
+            </div>
+            <div class="process_header">
+                <div class="process_actions">
+                    {% if spotify_verified %}
+                    <button onclick="window.location.href='{{ url_for('explore_mode') }}';">
+                        Queue
+                    </button>
+                    {% else %}
+                    <button onclick="window.location.href='{{ url_for('explore_mode') }}';" disabled style="background-color: gray; color: lightgray">
+                        Queue
+                    </button>
                     {% endif %}
                 </div>
             </div>

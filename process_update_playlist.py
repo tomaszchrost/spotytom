@@ -22,7 +22,7 @@ def string_equal(str1, str2):
 
 
 # uses other implemented tasks for carry out processes
-class Processor:
+class ProcessUpdatePlaylist:
 
     # initialise other classes
     def __init__(self, spotify_token=None, lastfm_token=None, flask_username=None, lastfm_username=None):

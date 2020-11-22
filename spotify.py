@@ -5,6 +5,7 @@ import random
 import scrobble_objects
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.oauth2 import SpotifyClientCredentials
+from scrobble_object_utils import check_for_unwanted_characters
 
 
 # get scope we need to access Spotify
@@ -62,13 +63,7 @@ class SpotifySong:
         self.track_name = get_track_name(spotify_track)
         self.spotify_uri = get_track_uri(spotify_track)
 
-        self.check_for_unwanted_characters()
-
-    def check_for_unwanted_characters(self):
-        self.track_artist = self.track_artist.replace("…", "...")
-        self.track_artist = self.track_artist.replace("’", "'")
-        self.track_name = self.track_name.replace("…", "...")
-        self.track_name = self.track_name.replace("’", "'")
+        check_for_unwanted_characters(self)
 
 
 # class for Spotify instance
@@ -205,11 +200,11 @@ class Spotify:
         return track_uris[random.randint(0, track_count - 1)]
 
     def get_artist_playing(self):
-        return self.user._get("me/player/currently-playing")['item']['artists'][0]['uri']
+        return self.user.current_user_playing_track()['item']['artists'][0]['uri']
 
     def get_track_playing(self):
-        return self.user._get("me/player/currently-playing")['item']['uri']
+        return self.user.current_user_playing_track()['item']['uri']
 
     def add_tracks_to_playback(self, track_uris):
-        payload = {"uris": track_uris, "offset": {"position": 0}}
-        return self.user._put("me/player/play", payload=payload)
+        for uri in track_uris:
+            self.user.add_to_queue(uri)

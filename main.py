@@ -1,7 +1,8 @@
-from processor import Processor
+from process_update_playlist import ProcessUpdatePlaylist
+
 
 def main():
-    controller = Processor()
+    controller = ProcessUpdatePlaylist()
     print("Updating Best Of Playlist...")
     controller.update_best_of_playlist()
     #print("Starting Explore Mode...")

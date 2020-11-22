@@ -8,7 +8,8 @@ import spotipy
 import authenticator
 from spotify import get_scope
 import requests
-from processor import Processor
+from process_update_playlist import ProcessUpdatePlaylist
+from process_explore_mode import ProcessExploreMode
 from pylast import md5
 from bs4 import BeautifulSoup
 from app import db
@@ -116,7 +117,7 @@ def lastfm_callback():
 def new_thread_update_playlist(spoty_toke, lastfm_key, lastfm_name, user_id):
     user = User.query.get(user_id)
     try:
-        processor = Processor(
+        processor = ProcessUpdatePlaylist(
             spoty_toke,
             lastfm_key,
             user.username,
@@ -145,4 +146,11 @@ def update_playlist():
         current_user.id,
     ))
     update_thread.start()
+    return redirect("index")
+
+
+@app.route('/explore_mode')
+def explore_mode():
+    processor = ProcessExploreMode(session["spotify_toke"])
+    processor.start_explore_mode()
     return redirect("index")
