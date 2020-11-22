@@ -2,8 +2,12 @@ from lastfm import LastFM
 from spotify import Spotify
 from database import Database
 import scrobble_objects
+import MySQLdb
 
 play_count_to_be_added = 5
+# used for skipping over issues, if I just need it to work
+hide_errors = False
+
 
 # TODO standardise print outputs to stdout
 # error when db returns multiple tracks of the name, shouldn't ever happen
@@ -62,6 +66,13 @@ class Processor:
 
                 except UniqueIndexException:
                     print("Two matching tracks found, unique index error!")
+
+                except MySQLdb._exceptions.OperationalError as e:
+                    if hide_errors:
+                        print("Could not add track {}".format(track))
+                    else:
+                        raise e
+
             date.save(self.db)
             print("Finished with dates " + date.get_start_date_string() + " to " + date.get_end_date_string())
 
