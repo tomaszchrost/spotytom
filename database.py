@@ -59,6 +59,7 @@ def db_scrobble_track_object(f):
                     play_count=track["play_count"],
                     to_be_added=track["to_be_added"],
                     in_playlist=track["in_playlist"],
+                    shuffled=track["shuffled"],
                     spotify_uri=track["spotify_uri"]
                 )
             )
@@ -95,6 +96,7 @@ class Database:
                        "play_count INT NOT NULL," +
                        "to_be_added BOOLEAN NOT NULL DEFAULT FALSE," +
                        "in_playlist BOOLEAN NOT NULL DEFAULT FALSE," +
+                       "shuffled BOOLEAN NOT NULL DEFAULT FALSE" +
                        "spotify_uri VARCHAR(255) DEFAULT NULL," +
                        "PRIMARY KEY(track_artist, track_name)"
                        ")")
@@ -166,16 +168,18 @@ class Database:
     def save_scrobble_track(self, scrobble_track):
         cursor = self.get_cursor()
 
-        sql = f"""INSERT INTO {self.username}_scrobble_tracks (track_artist, track_name, play_count, to_be_added, in_playlist, spotify_uri) VALUES (%s, %s, %s, %s, %s, %s)
+        sql = f"""INSERT INTO {self.username}_scrobble_tracks (track_artist, track_name, play_count, to_be_added, in_playlist, shuffled, spotify_uri) VALUES (%s, %s, %s, %s, %s, %s, %s)
                  ON DUPLICATE KEY UPDATE play_count=VALUES(play_count),
                                          to_be_added=VALUES(to_be_added),
                                          in_playlist=VALUES(in_playlist),
+                                         shuffled=VALUES(shuffled),
                                          spotify_uri=VALUES(spotify_uri)"""
         val = (scrobble_track.track_artist,
                scrobble_track.track_name,
                scrobble_track.play_count,
                scrobble_track.to_be_added,
                scrobble_track.in_playlist,
+               scrobble_track.shuffled,
                scrobble_track.spotify_uri)
         cursor.execute(sql, val)
         self.db.commit()

@@ -10,6 +10,7 @@ from spotify import get_scope
 import requests
 from process_update_playlist import ProcessUpdatePlaylist
 from process_explore_mode import ProcessExploreMode
+from process_smart_shuffle import  ProcessSmartShuffle
 from pylast import md5
 from bs4 import BeautifulSoup
 from app import db
@@ -153,4 +154,11 @@ def update_playlist():
 def explore_mode():
     processor = ProcessExploreMode(session["spotify_toke"])
     processor.start_explore_mode()
+    return redirect("index")
+
+
+@app.route('/smart_shuffle')
+def smart_shuffle():
+    processor = ProcessSmartShuffle(session["spotify_toke"], current_user.username)
+    processor.start_smart_shuffle()
     return redirect("index")

@@ -56,4 +56,29 @@
                 </div>
             </div>
         </div>
+        <div class="process" style="background-color: lightgoldenrodyellow">
+            <div class="process_header">
+                <div class="process_names">
+                    Smart Shuffle
+                </div>
+            </div>
+            <div class="process_header">
+                <div class="process_prerequisites">
+                    Prerequisites: Spotify, "Automated Best Of" playlist
+                </div>
+            </div>
+            <div class="process_header">
+                <div class="process_actions">
+                    {% if spotify_verified %}
+                    <button onclick="window.location.href='{{ url_for('smart_shuffle') }}';">
+                        Queue
+                    </button>
+                    {% else %}
+                    <button onclick="window.location.href='{{ url_for('smart_shuffle') }}';" disabled style="background-color: gray; color: lightgray">
+                        Queue
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 {% endblock %}

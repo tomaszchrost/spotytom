@@ -2,6 +2,7 @@ from _datetime import datetime
 from database import Database
 from scrobble_object_utils import check_for_unwanted_characters
 
+
 # decorator to make dates readable
 def make_date_readable(f):
     def format_unix_date(*args, **kwargs):
@@ -38,15 +39,13 @@ class ScrobbleDate:
 
 
 def format_track_name(track_name):
-    # i don't think this is necessary anymore
-    #return str(track_name).replace("'", "''")
     return str(track_name).split(" - ", 1)
 
 
 # object for ScrobbleTrack
 class ScrobbleTrack:
 
-    def __init__(self, lastfm_track=None, track_artist=None, track_name=None, play_count=0, to_be_added=False, in_playlist=False, spotify_uri=None):
+    def __init__(self, lastfm_track=None, track_artist=None, track_name=None, play_count=0, to_be_added=False, in_playlist=False, shuffled=False, spotify_uri=None):
         if lastfm_track is not None:
             formatted_track = format_track_name(lastfm_track.item)
             self.track_artist = formatted_track[0]
@@ -58,6 +57,7 @@ class ScrobbleTrack:
             self.play_count = play_count
         self.to_be_added = bool(to_be_added)
         self.in_playlist = bool(in_playlist)
+        self.shuffled = bool(shuffled)
         self.spotify_uri = spotify_uri
 
         check_for_unwanted_characters(self)
