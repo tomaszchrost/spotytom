@@ -22,7 +22,7 @@ import copy
 def index():
     spotify_verified = True if "spotify_toke" in session else False
     lastfm_verified = True if "lastfm_key" in session else False
-    return render_template('index.html', title='Home', spotify_verified=spotify_verified, lastfm_verified=lastfm_verified)
+    return render_template('index.html', spotify_verified=spotify_verified, lastfm_verified=lastfm_verified)
 
 
 @app.route('/login', methods=['GET', 'POST'])
