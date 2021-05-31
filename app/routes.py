@@ -1,6 +1,6 @@
 from app import app
 from flask import render_template, flash, redirect, url_for, request, session
-from app.forms import LoginForm
+from app.forms import LoginForm, AddPlaylistForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User
 from werkzeug.urls import url_parse
@@ -10,7 +10,8 @@ from spotify import get_scope
 import requests
 from process_update_playlist import ProcessUpdatePlaylist
 from process_explore_mode import ProcessExploreMode
-from process_smart_shuffle import  ProcessSmartShuffle
+from process_smart_shuffle import ProcessSmartShuffle
+from process_add_playlist import ProcessAddPlaylist
 from pylast import md5
 from bs4 import BeautifulSoup
 from app import db
@@ -24,7 +25,8 @@ import copy
 def index():
     spotify_verified = True if "spotify_toke" in session else False
     lastfm_verified = True if "lastfm_key" in session else False
-    return render_template('index.html', spotify_verified=spotify_verified, lastfm_verified=lastfm_verified)
+    form = AddPlaylistForm()
+    return render_template('index.html', spotify_verified=spotify_verified, lastfm_verified=lastfm_verified, form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -161,4 +163,12 @@ def explore_mode():
 def smart_shuffle():
     processor = ProcessSmartShuffle(session["spotify_toke"], current_user.username)
     processor.start_smart_shuffle()
+    return redirect("index")
+
+
+@app.route('/add_playlist', methods=['POST'])
+def add_playlist():
+    form = AddPlaylistForm()
+    processor = ProcessAddPlaylist(form.playlist_id.data, session["spotify_toke"], current_user.username)
+    processor.add_playlist_tracks()
     return redirect("index")

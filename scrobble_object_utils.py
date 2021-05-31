@@ -1,5 +1,3 @@
-def check_for_unwanted_characters(track_object):
-    track_object.track_artist = track_object.track_artist.replace("…", "...")
-    track_object.track_artist = track_object.track_artist.replace("’", "'")
-    track_object.track_name = track_object.track_name.replace("…", "...")
-    track_object.track_name = track_object.track_name.replace("’", "'")
+# case insensitive string equal check
+def string_equal(str1, str2):
+    return str1.lower() == str2.lower()

@@ -1,6 +1,5 @@
 from _datetime import datetime
 from database import Database
-from scrobble_object_utils import check_for_unwanted_characters
 
 
 # decorator to make dates readable
@@ -59,8 +58,6 @@ class ScrobbleTrack:
         self.in_playlist = bool(in_playlist)
         self.shuffled = bool(shuffled)
         self.spotify_uri = spotify_uri
-
-        check_for_unwanted_characters(self)
 
     def save(self, db: Database):
         db.save_scrobble_track(self)

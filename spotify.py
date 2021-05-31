@@ -5,7 +5,6 @@ import random
 import scrobble_objects
 from spotipy.oauth2 import SpotifyOAuth
 from spotipy.oauth2 import SpotifyClientCredentials
-from scrobble_object_utils import check_for_unwanted_characters
 
 
 # get scope we need to access Spotify
@@ -62,8 +61,6 @@ class SpotifySong:
         self.track_artist = get_track_artist(spotify_track)
         self.track_name = get_track_name(spotify_track)
         self.spotify_uri = get_track_uri(spotify_track)
-
-        check_for_unwanted_characters(self)
 
 
 # class for Spotify instance

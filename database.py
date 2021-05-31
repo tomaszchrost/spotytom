@@ -79,7 +79,7 @@ class Database:
 
     def initialise_db(self):
         cursor = self.get_cursor()
-        cursor.execute("CREATE DATABASE " + DBNAME + " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+        cursor.execute("CREATE DATABASE " + DBNAME + " CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;")
         self.db = mysql_connect_to_db()
 
     def initialise_date_table(self):
@@ -90,16 +90,16 @@ class Database:
     def initialise_track_table(self):
         print("executing_track_table")
         cursor = self.get_cursor()
-        cursor.execute(f"CREATE TABLE {self.username}_scrobble_tracks (" +
-                       "track_artist VARCHAR(255) NOT NULL," +
-                       "track_name VARCHAR(255) NOT NULL," +
-                       "play_count INT NOT NULL," +
-                       "to_be_added BOOLEAN NOT NULL DEFAULT FALSE," +
-                       "in_playlist BOOLEAN NOT NULL DEFAULT FALSE," +
-                       "shuffled BOOLEAN NOT NULL DEFAULT FALSE" +
-                       "spotify_uri VARCHAR(255) DEFAULT NULL," +
-                       "PRIMARY KEY(track_artist, track_name)"
-                       ")")
+        cursor.execute(f"""CREATE TABLE {self.username}_scrobble_tracks (
+                       track_artist VARCHAR(255) NOT NULL,
+                       track_name VARCHAR(255) NOT NULL,
+                       play_count INT NOT NULL,
+                       to_be_added BOOLEAN NOT NULL DEFAULT FALSE,
+                       in_playlist BOOLEAN NOT NULL DEFAULT FALSE,
+                       shuffled BOOLEAN NOT NULL DEFAULT FALSE,
+                       spotify_uri VARCHAR(255) DEFAULT NULL,
+                       PRIMARY KEY(track_artist, track_name)
+                       )""")
 
     def check_table_exists(self, tablename):
         cursor = self.get_cursor()

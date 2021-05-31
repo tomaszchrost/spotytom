@@ -3,6 +3,7 @@ from spotify import Spotify
 from database import Database
 import scrobble_objects
 import MySQLdb
+from scrobble_object_utils import string_equal
 
 play_count_to_be_added = 5
 # used for skipping over issues, if I just need it to work
@@ -14,11 +15,6 @@ hide_errors = False
 class UniqueIndexException(Exception):
     """Raised when more than one of a unique index found"""
     pass
-
-
-# case insensitive string equal check
-def string_equal(str1, str2):
-    return str1.lower() == str2.lower()
 
 
 # uses other implemented tasks for carry out processes
