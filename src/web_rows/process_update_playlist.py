@@ -1,9 +1,9 @@
-from lastfm import LastFM
-from spotify import Spotify
-from database import Database
-import scrobble_objects
+from src.lastfm import LastFM
+from src.spotify import Spotify
+from src.database import Database
+from src import scrobble_objects
 import MySQLdb
-from scrobble_object_utils import string_equal
+from src.scrobble_object_utils import string_equal
 
 play_count_to_be_added = 5
 # used for skipping over issues, if I just need it to work
@@ -157,7 +157,7 @@ class ProcessUpdatePlaylist:
 
     def update_best_of_playlist(self):
         self.update_with_new_scrobble_tracks()
-        self.update_with_new_playlist_tracks()
+        #self.update_with_new_playlist_tracks()
         self.update_tracks_to_be_added()
         self.update_uris()
         self.add_tracks_to_be_added_to_playlist()

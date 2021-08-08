@@ -4,19 +4,17 @@ from app.forms import LoginForm, AddPlaylistForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User
 from werkzeug.urls import url_parse
-import spotipy
 import authenticator
-from spotify import get_scope
+from src.spotify import get_scope
 import requests
-from process_update_playlist import ProcessUpdatePlaylist
-from process_explore_mode import ProcessExploreMode
-from process_smart_shuffle import ProcessSmartShuffle
-from process_add_playlist import ProcessAddPlaylist
+from src.web_rows.process_update_playlist import ProcessUpdatePlaylist
+from src.web_rows.process_explore_mode import ProcessExploreMode
+from src.web_rows.process_smart_shuffle import ProcessSmartShuffle
+from src.web_rows.process_add_playlist import ProcessAddPlaylist
 from pylast import md5
 from bs4 import BeautifulSoup
 from app import db
 import threading
-import copy
 
 
 @app.route('/')

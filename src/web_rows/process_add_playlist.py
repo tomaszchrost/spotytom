@@ -1,7 +1,7 @@
-from spotify import Spotify
-from database import Database
-import scrobble_objects
-from scrobble_object_utils import string_equal
+from src.spotify import Spotify
+from src.database import Database
+from src import scrobble_objects
+from src.scrobble_object_utils import string_equal
 
 hide_errors = False
 

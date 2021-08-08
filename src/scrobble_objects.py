@@ -1,5 +1,5 @@
 from _datetime import datetime
-from database import Database
+from src.database import Database
 
 
 # decorator to make dates readable

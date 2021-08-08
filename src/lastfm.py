@@ -1,6 +1,6 @@
 import pylast
 import authenticator
-import scrobble_objects
+import src.scrobble_objects as scrobble_objects
 
 
 # get user object with authentication data

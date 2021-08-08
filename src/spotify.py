@@ -1,15 +1,12 @@
 import spotipy
-import spotipy.util as util
 import authenticator
 import random
-import scrobble_objects
 from spotipy.oauth2 import SpotifyOAuth
-from spotipy.oauth2 import SpotifyClientCredentials
 
 
 # get scope we need to access Spotify
 def get_scope():
-    return 'playlist-modify-public streaming user-read-currently-playing'
+    return 'playlist-modify-public playlist-modify-private streaming user-read-currently-playing'
 
 
 # get user object to connect
@@ -147,9 +144,12 @@ class Spotify:
     def add_tracks(self, uri_list):
         uris = uri_list[:100]
         uri_list = uri_list[100:]
-        self.user.user_playlist_add_tracks(self.username, self.get_automated_playlist_id(), uris)
+        # handle local uris
+        uris = [uri for uri in uris if "spotify:local" not in uri]
+        if uris:
+            self.user.user_playlist_add_tracks(self.username, self.get_automated_playlist_id(), uris)
 
-        if len(uri_list) != 0:
+        if uri_list:
             self.add_tracks(uri_list)
 
     # adds up to 100 tracks

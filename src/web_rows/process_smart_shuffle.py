@@ -1,5 +1,5 @@
-from spotify import Spotify
-from database import  Database
+from src.spotify import Spotify
+from src.database import  Database
 import random
 
 
