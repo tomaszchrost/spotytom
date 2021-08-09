@@ -1,4 +1,4 @@
-from src.spotify import Spotify
+from src.spotify.spotify import Spotify
 from src.database import Database
 from src import scrobble_objects
 from src.scrobble_object_utils import string_equal

@@ -1,4 +1,4 @@
-from src.spotify import Spotify
+from src.spotify.spotify import Spotify
 from src.database import  Database
 import random
 

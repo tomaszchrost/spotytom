@@ -5,7 +5,8 @@ from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User
 from werkzeug.urls import url_parse
 import authenticator
-from src.spotify import get_scope
+import src.spotify.authentication as spotify_authentication
+import src.lastfm.authentication as lastfm_authentication
 import requests
 from src.web_rows.process_update_playlist import ProcessUpdatePlaylist
 from src.web_rows.process_explore_mode import ProcessExploreMode
@@ -15,14 +16,16 @@ from pylast import md5
 from bs4 import BeautifulSoup
 from app import db
 import threading
+from app.utils import refresh_tokens, run_in_new_thread, update_playlist_action
 
 
 @app.route('/')
 @app.route('/index')
 @login_required
 def index():
-    spotify_verified = True if "spotify_toke" in session else False
+    spotify_verified = True if "spotify_token" in session and "spotify_refresh_token" in session else False
     lastfm_verified = True if "lastfm_key" in session else False
+    # TODO how would I do multiple forms?
     form = AddPlaylistForm()
     return render_template('index.html', spotify_verified=spotify_verified, lastfm_verified=lastfm_verified, form=form)
 
@@ -31,17 +34,23 @@ def index():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
+
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
+
         if user is None or not user.check_password(form.password.data):
             flash('Invalid username or password')
             return redirect(url_for('login'))
+
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
+
         if not next_page or url_parse(next_page).netloc != '':
             next_page = url_for('index')
+
         return redirect(next_page)
+
     return render_template('login.html', title='Sign In', form=form)
 
 
@@ -51,122 +60,62 @@ def logout():
     return redirect(url_for('index'))
 
 
-# SPOTIFY ROUTES
-SPOTIFY_API_BASE = 'https://accounts.spotify.com'
-SHOW_SPOTIFY_DIALOG = True
-SPOTIFY_WEB_REDIRECT_URL = "http://127.0.0.1:5000/spotify_callback"
-
-
 @app.route('/verify_spotify')
 def verify_spotify():
-    auth_url = f'{SPOTIFY_API_BASE}/authorize?client_id={authenticator.SPOTIPY_CLIENT_ID}&response_type=code&redirect_uri={SPOTIFY_WEB_REDIRECT_URL}&scope={get_scope()}&show_dialog={SHOW_SPOTIFY_DIALOG}'
-    return redirect(auth_url)
-
-
-@app.route('/spotify_callback')
-def spotify_callback():
-    session.pop('spotify_toke', None)
-    code = request.args.get('code')
-
-    auth_token_url = f"{SPOTIFY_API_BASE}/api/token"
-    res = requests.post(auth_token_url, data={
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": SPOTIFY_WEB_REDIRECT_URL,
-        "client_id": authenticator.SPOTIPY_CLIENT_ID,
-        "client_secret": authenticator.SPOTIPY_CLIENT_SECRET
-    })
-
-    res_body = res.json()
-    session["spotify_toke"] = res_body.get("access_token")
-
-    return redirect(url_for("index"))
-
-
-# LASTFM ROUTES
-LASTFM_API_BASE = 'http://ws.audioscrobbler.com/2.0/'
-LASTFM_WEB_REDIRECT_URL = "http://127.0.0.1:5000/lastfm_callback"
+    return redirect(spotify_authentication.get_auth_url())
 
 
 @app.route('/verify_lastfm')
 def verify_lastfm():
-    auth_url = f'http://www.last.fm/api/auth/?api_key={authenticator.lastfm_api_key}&cb={LASTFM_WEB_REDIRECT_URL}'
-    return redirect(auth_url)
+    return redirect(lastfm_authentication.get_auth_url())
+
+
+@app.route('/spotify_callback')
+def spotify_callback():
+    session.pop('spotify_token', None)
+    session.pop('spotify_refresh_token', None)
+
+    code = request.args.get('code')
+    session["spotify_token"], session["spotify_refresh_token"] = spotify_authentication.get_tokens(code)
+
+    return redirect(url_for("index"))
 
 
 @app.route('/lastfm_callback')
 def lastfm_callback():
     token = request.args.get('token')
-    auth_token_url = f"{LASTFM_API_BASE}"
-    signature_to_hash = f"api_key{authenticator.lastfm_api_key}methodauth.getSessiontoken{token}{authenticator.lastfm_api_secret}"
-    signature = md5(signature_to_hash)
+    session["lastfm_key"], session["lastfm_name"] = lastfm_authentication.authorize(token)
 
-    res = requests.post(auth_token_url, data={
-        "method": "auth.getSession",
-        "api_key": authenticator.lastfm_api_key,
-        "api_sig": signature,
-        "token": token
-    })
-
-    soup = BeautifulSoup(res.content, features="html.parser")
-
-    session["lastfm_key"] = soup.find('key').string
-    session["lastfm_name"] = soup.find('name').string
     return redirect(url_for("index"))
 
 
-def new_thread_update_playlist(spoty_toke, lastfm_key, lastfm_name, user_id):
-    user = User.query.get(user_id)
-    try:
-        processor = ProcessUpdatePlaylist(
-            spoty_toke,
-            lastfm_key,
-            user.username,
-            lastfm_name
-        )
-        processor.update_best_of_playlist()
-    except Exception as e:
-        user.updating_playlist = False
-        user.error_updating = True
-        db.session.commit()
-        raise e
-    else:
-        user.updating_playlist = False
-        db.session.commit()
-
-
+@refresh_tokens
 @app.route('/update_playlist')
 def update_playlist():
-    current_user.error_updating = False
-    current_user.updating_playlist = True
-    db.session.commit()
-    update_thread = threading.Thread(target=new_thread_update_playlist, args=(
-        session['spotify_toke'],
-        session['lastfm_key'],
-        session['lastfm_name'],
-        current_user.id,
-    ))
-    update_thread.start()
+    update_playlist_action()
     return redirect("index")
 
 
+@refresh_tokens
 @app.route('/explore_mode')
 def explore_mode():
-    processor = ProcessExploreMode(session["spotify_toke"])
+    processor = ProcessExploreMode(session["spotify_token"])
     processor.start_explore_mode()
     return redirect("index")
 
 
+@refresh_tokens
 @app.route('/smart_shuffle')
 def smart_shuffle():
-    processor = ProcessSmartShuffle(session["spotify_toke"], current_user.username)
+    processor = ProcessSmartShuffle(session["spotify_token"], current_user.username)
     processor.start_smart_shuffle()
     return redirect("index")
 
 
+@refresh_tokens
 @app.route('/add_playlist', methods=['POST'])
 def add_playlist():
     form = AddPlaylistForm()
-    processor = ProcessAddPlaylist(form.playlist_id.data, session["spotify_toke"], current_user.username)
+    processor = ProcessAddPlaylist(form.playlist_id.data, session["spotify_token"], current_user.username)
     processor.add_playlist_tracks()
     return redirect("index")

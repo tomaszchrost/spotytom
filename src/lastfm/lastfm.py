@@ -1,22 +1,7 @@
 import pylast
 import authenticator
 import src.scrobble_objects as scrobble_objects
-
-
-# get user object with authentication data
-def get_user_object():
-    return pylast.LastFMNetwork(api_key=authenticator.lastfm_api_key,
-                                api_secret=authenticator.lastfm_api_secret,
-                                username=authenticator.lastfm_username,
-                                password_hash=authenticator.lastfm_password).get_authenticated_user()
-
-
-def get_user_with_token(token, username):
-    return pylast.LastFMNetwork(session_key=token,
-                                api_key=authenticator.lastfm_api_key,
-                                api_secret=authenticator.lastfm_api_secret,
-                                username=username).get_authenticated_user()
-
+from src.lastfm.authentication import get_user_with_token, get_user
 
 # start date return from last fm date
 def get_scrobble_start_date(date):
@@ -60,7 +45,7 @@ class LastFM:
         if token:
             self.user = get_user_with_token(token, username)
         else:
-            self.user = get_user_object()
+            self.user = get_user()
 
     @last_fm_scrobble_date_object
     def get_scrobble_dates(self):

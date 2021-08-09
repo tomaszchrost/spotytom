@@ -1,32 +1,7 @@
 import spotipy
 import authenticator
 import random
-from spotipy.oauth2 import SpotifyOAuth
-
-
-# get scope we need to access Spotify
-def get_scope():
-    return 'playlist-modify-public playlist-modify-private streaming user-read-currently-playing'
-
-
-# get user object to connect
-def get_user_object():
-    auth_manager = SpotifyOAuth(
-        scope=get_scope(),
-        username=authenticator.spotify_username,
-        client_id=authenticator.SPOTIPY_CLIENT_ID,
-        client_secret=authenticator.SPOTIPY_CLIENT_SECRET,
-        redirect_uri=authenticator.SPOTIPY_REDIRECT_URI
-    )
-
-    if auth_manager:
-        return spotipy.Spotify(auth_manager=auth_manager)
-
-    return False
-
-
-def get_user_with_token(token):
-    return spotipy.Spotify(auth=token)
+import src.spotify.authentication as spotify_authentication
 
 
 def get_track_artist(track):
@@ -65,11 +40,11 @@ class Spotify:
 
     def __init__(self, token=None):
         if token:
-            self.user = get_user_with_token(token)
+            self.user = spotify_authentication.get_user_with_token(token)
             self.username = self.user.me()['id']
         else:
             self.username = authenticator.spotify_username
-            self.user = get_user_object()
+            self.user = spotify_authentication.get_user_object()
 
     # ------------------------------------------------------------------------------------------------------------
     # best of playlist functions

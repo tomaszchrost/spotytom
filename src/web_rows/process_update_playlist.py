@@ -1,5 +1,5 @@
-from src.lastfm import LastFM
-from src.spotify import Spotify
+from src.lastfm.lastfm import LastFM
+from src.spotify.spotify import Spotify
 from src.database import Database
 from src import scrobble_objects
 import MySQLdb
