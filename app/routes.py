@@ -16,7 +16,7 @@ from pylast import md5
 from bs4 import BeautifulSoup
 from app import db
 import threading
-from app.utils import refresh_tokens, run_in_new_thread, update_playlist_action
+from app.utils import refresh_tokens, run_in_new_thread, run_update_playlist
 
 
 @app.route('/')
@@ -92,7 +92,7 @@ def lastfm_callback():
 @refresh_tokens
 @app.route('/update_playlist')
 def update_playlist():
-    update_playlist_action()
+    run_update_playlist()
     return redirect("index")
 
 
