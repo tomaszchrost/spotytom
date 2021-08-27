@@ -1,3 +1,2 @@
-from . import authentication
-from . import lastfm
-from .lastfm import LastFM
+from .lastfm import *
+import src.lastfm.authentication as authentication

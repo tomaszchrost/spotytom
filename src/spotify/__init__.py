@@ -1,3 +1,2 @@
-from . import authentication
-from . import spotify
-from .spotify import Spotify
+from .spotify import *
+import src.spotify.authentication as authentication

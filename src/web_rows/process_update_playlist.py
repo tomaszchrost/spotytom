@@ -1,9 +1,9 @@
-from old_src.lastfm import LastFM
-from old_src.spotify import Spotify
-from old_src.database import Database
-from old_src import scrobble_objects
+from src.lastfm import LastFM
+from src.spotify import Spotify
+from src.database import Database
+from src import scrobble_objects
 import MySQLdb
-from old_src.scrobble_object_utils import string_equal
+from src.scrobble_object_utils import string_equal
 
 play_count_to_be_added = 5
 # used for skipping over issues, if I just need it to work

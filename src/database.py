@@ -1,6 +1,6 @@
 import MySQLdb
 import authenticator
-import old_src.scrobble_objects as scrobble_objects
+import src.scrobble_objects as scrobble_objects
 
 DBNAME = "spotytom"
 

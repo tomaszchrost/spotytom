@@ -1,4 +1,4 @@
-from old_src.spotify import Spotify
+from src.spotify import Spotify
 
 
 # uses other implemented tasks for carry out processes
