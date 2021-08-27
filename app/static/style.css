@@ -1,0 +1,105 @@
+body {margin: 0px}
+.header {
+    background-color: #191414;
+    color: limegreen;
+    border: 0px;
+    height: 50px;
+    float: left;
+    padding: 5px;
+    width: 100%;
+}
+.header-div {
+    float: left;
+    height: 50px;
+    position: relative;
+    width: 33%;
+}
+div.header-logo { float: left; height: 50px }
+img.header-logo { height: 50px; }
+.header-links {
+    width: 100%;
+    font-family: 'Helvetica';
+    padding: 10px;
+    top: 50%;
+    left: 50%;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-weight: 600;
+}
+
+.header-links > a {
+    color: white;
+    text-decoration: None;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.header-api-keys {
+    top: 50%;
+    left: 50%;
+    height: 30px;
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
+
+div.api_key {
+    height: 50px;
+    width: 50px;
+    position: relative;
+    float: left;
+}
+img.api_key {
+    position: absolute;
+    height: 30px;
+}
+
+div.process {
+    width: 100%;
+    font-weight: 600;
+    font-family: 'Helvetica';
+    float: left;
+    height: 50px;
+    padding: 10px;
+}
+
+div.process_header {
+    float: left;
+    height: 50px;
+    position: relative;
+    width: 33%;
+}
+
+.process_header > div {
+    top: 50%;
+    left: 50%;
+    height: 30px;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 100%;
+}
+
+div.process_names {
+    padding-left: 100px;
+    float: left;
+}
+
+div.process_prerequisites {
+    float: left;
+}
+
+div.process_actions {
+    float: left;
+}
+
+button {
+    font-weight: 600;
+    font-family: 'Helvetica';
+    border-radius: 5px;
+    border-style: solid;
+    border-color: #191414;
+    background-color: black;
+    font-size: 16px;
+    height: 30px;
+    width: 100px;
+    color: limegreen;
+}

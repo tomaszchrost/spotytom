@@ -1,0 +1,65 @@
+<html>
+    <head>
+        {% if title %}
+        <title>{{ title }} - Spotytom</title>
+        {% else %}
+        <title>Welcome to Spotytom</title>
+        {% endif %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <div class="header">
+            <div class="header-div">
+                <div class="header-logo">
+                    <img src="{{ url_for('static', filename='spotytom.png') }}" class="header-logo">
+                </div>
+            </div>
+            <div class="header-div">
+                <div class="header-links">
+                    Spotytom: {{current_user.username}}
+                    <a href="{{ url_for('index') }}">Home</a>
+                    {% if current_user.is_anonymous %}
+                    <a href="{{ url_for('login') }}">Login</a>
+                    {% else %}
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="header-div">
+                <div class="header-api-keys">
+                    <div class="api_key">
+                        <a href="{{ url_for('verify_spotify') }}" class="api_key">
+                            <img src="{{ url_for('static', filename='spotify.png') }}" class="api_key">
+                            {% if not spotify_verified %}
+                            <img src="{{ url_for('static', filename='cross.png') }}" class="api_key">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='tick.png') }}" class="api_key">
+                            {% endif %}
+                        </a>
+                    </div>
+                    <div class="api_key">
+                        <a href="{{ url_for('verify_lastfm') }}" class="api_key">
+                            <img src="{{ url_for('static', filename='lastfm.png') }}" class="api_key">
+                            {% if not lastfm_verified %}
+                            <img src="{{ url_for('static', filename='cross.png') }}" class="api_key">
+                            {% else %}
+                            <img src="{{ url_for('static', filename='tick.png') }}" class="api_key">
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% endwith %}
+        {% block content %}
+        {% endblock %}
+    </body>
+</html>
