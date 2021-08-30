@@ -2,6 +2,7 @@ from spotipy.oauth2 import SpotifyOAuth
 import spotipy
 import authenticator
 import requests
+import base64
 
 SPOTIFY_API_BASE = 'https://accounts.spotify.com'
 SHOW_SPOTIFY_DIALOG = True
@@ -29,8 +30,22 @@ def get_tokens(code):
     return access_token, refresh_token
 
 
-def refresh_tokens(refresh_token):
-    return get_tokens(refresh_token)
+def refresh_token(refresh_token):
+    auth_token_url = f"{SPOTIFY_API_BASE}/api/token"
+    basic_auth = authenticator.SPOTIPY_CLIENT_ID + ":" + authenticator.SPOTIPY_CLIENT_SECRET
+    basic_auth_encoded = base64.b64encode(basic_auth.encode())
+    res = requests.post(auth_token_url,
+        headers={
+            "Authorization": "Basic " + basic_auth_encoded.decode()
+        },
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token
+        }
+    )
+    res_body = res.json()
+    access_token = res_body.get("access_token")
+    return access_token
 
 
 # get user object to connect

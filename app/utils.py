@@ -1,15 +1,16 @@
 from flask import session
 from flask_login import current_user
-from src.spotify.authentication import refresh_tokens as refresh_spotify_tokens
+from src.spotify.authentication import refresh_token
 import threading
 from app import db
 from app.models import User
 from src.web_rows.process_update_playlist import ProcessUpdatePlaylist
+from flask_login import current_user
 
 
 def refresh_tokens(f):
     def refresh_tokens_decorator(*args, **kwargs):
-        session['spotify_token'], session['spotify_refresh_token'] = refresh_spotify_tokens(session['spotify_refresh_token'])
+        session['spotify_token'] = refresh_token(current_user.spotify_refresh_token)
         return f(*args, **kwargs)
     return refresh_tokens_decorator
 
@@ -23,13 +24,13 @@ def run_in_new_thread(f):
 
 def run_update_playlist():
 
+    @refresh_tokens
     @run_in_new_thread
-    def update_playlist(spotify_token, lastfm_key, lastfm_name, user_id):
+    def update_playlist(spotify_token, lastfm_name, user_id):
         user = User.query.get(user_id)
         try:
             processor = ProcessUpdatePlaylist(
                 spotify_token,
-                lastfm_key,
                 user.username,
                 lastfm_name
             )
@@ -48,7 +49,6 @@ def run_update_playlist():
     db.session.commit()
     update_playlist(
         session['spotify_token'],
-        session['lastfm_key'],
         session['lastfm_name'],
         current_user.id,
     )

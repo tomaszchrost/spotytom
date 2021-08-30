@@ -21,8 +21,8 @@ class UniqueIndexException(Exception):
 class ProcessUpdatePlaylist:
 
     # initialise other classes
-    def __init__(self, spotify_token=None, lastfm_token=None, flask_username=None, lastfm_username=None):
-        self.lastfm = LastFM(lastfm_token, lastfm_username)
+    def __init__(self, spotify_token=None, flask_username=None, lastfm_username=None):
+        self.lastfm = LastFM(lastfm_username)
         self.spotify = Spotify(spotify_token)
         self.db = Database(flask_username)
         self.ScrobbleData = self.db.get_scrobble_tracks()

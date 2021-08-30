@@ -38,6 +38,13 @@ def get_user():
                                 password_hash=authenticator.lastfm_password).get_authenticated_user()
 
 
+def get_pylast():
+    return pylast.LastFMNetwork(api_key=authenticator.lastfm_api_key,
+                                api_secret=authenticator.lastfm_api_secret,
+                                username=authenticator.lastfm_username,
+                                password_hash=authenticator.lastfm_password)
+
+
 def get_user_with_token(token, username):
     return pylast.LastFMNetwork(session_key=token,
                                 api_key=authenticator.lastfm_api_key,

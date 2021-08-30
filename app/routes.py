@@ -1,6 +1,7 @@
 from app import app
+from app import db
 from flask import render_template, flash, redirect, url_for, request, session
-from app.forms import LoginForm, AddPlaylistForm
+from app.forms import LoginForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User
 from werkzeug.urls import url_parse
@@ -11,7 +12,6 @@ import requests
 from src.web_rows.process_update_playlist import ProcessUpdatePlaylist
 from src.web_rows.process_explore_mode import ProcessExploreMode
 from src.web_rows.process_smart_shuffle import ProcessSmartShuffle
-from src.web_rows.process_add_playlist import ProcessAddPlaylist
 from pylast import md5
 from bs4 import BeautifulSoup
 from app import db
@@ -23,11 +23,9 @@ from app.utils import refresh_tokens, run_in_new_thread, run_update_playlist
 @app.route('/index')
 @login_required
 def index():
-    spotify_verified = True if "spotify_token" in session and "spotify_refresh_token" in session else False
-    lastfm_verified = True if "lastfm_key" in session else False
-    # TODO how would I do multiple forms?
-    form = AddPlaylistForm()
-    return render_template('index.html', spotify_verified=spotify_verified, lastfm_verified=lastfm_verified, form=form)
+    spotify_verified = True if current_user.spotify_refresh_token else False
+    lastfm_verified = True if current_user.lastfm_username else False
+    return render_template('index.html', spotify_verified=spotify_verified, lastfm_verified=lastfm_verified)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -73,10 +71,10 @@ def verify_lastfm():
 @app.route('/spotify_callback')
 def spotify_callback():
     session.pop('spotify_token', None)
-    session.pop('spotify_refresh_token', None)
 
     code = request.args.get('code')
-    session["spotify_token"], session["spotify_refresh_token"] = spotify_authentication.get_tokens(code)
+    session["spotify_token"], current_user.spotify_refresh_token = spotify_authentication.get_tokens(code)
+    db.session.commit()
 
     return redirect(url_for("index"))
 
@@ -89,14 +87,12 @@ def lastfm_callback():
     return redirect(url_for("index"))
 
 
-@refresh_tokens
 @app.route('/update_playlist')
 def update_playlist():
     run_update_playlist()
     return redirect("index")
 
 
-@refresh_tokens
 @app.route('/explore_mode')
 def explore_mode():
     processor = ProcessExploreMode(session["spotify_token"])
@@ -104,18 +100,9 @@ def explore_mode():
     return redirect("index")
 
 
-@refresh_tokens
 @app.route('/smart_shuffle')
 def smart_shuffle():
     processor = ProcessSmartShuffle(session["spotify_token"], current_user.username)
     processor.start_smart_shuffle()
     return redirect("index")
 
-
-@refresh_tokens
-@app.route('/add_playlist', methods=['POST'])
-def add_playlist():
-    form = AddPlaylistForm()
-    processor = ProcessAddPlaylist(form.playlist_id.data, session["spotify_token"], current_user.username)
-    processor.add_playlist_tracks()
-    return redirect("index")
