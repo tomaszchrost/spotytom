@@ -4,13 +4,14 @@ from src.database import Database
 from src import scrobble_objects
 import MySQLdb
 from src.scrobble_object_utils import string_equal
+import logging
 
 play_count_to_be_added = 5
 # used for skipping over issues, if I just need it to work
 hide_errors = False
 
 
-# TODO standardise print outputs to stdout
+# TODO standardise logging.info outputs to stdout
 # error when db returns multiple tracks of the name, shouldn't ever happen
 class UniqueIndexException(Exception):
     """Raised when more than one of a unique index found"""
@@ -51,26 +52,26 @@ class ProcessUpdatePlaylist:
                         matching_track = matching_tracks[0]
                         matching_track.play_count += track.play_count
                         matching_track.save(self.db)
-                        print("Updated play count of " + track.track_artist + " - " + track.track_name)
+                        logging.info("Updated play count of " + track.track_artist + " - " + track.track_name)
                     # add new track
                     elif len(matching_tracks) == 0:
                         self.ScrobbleData.append(track)
                         track.save(self.db)
-                        print("Added new track " + track.track_artist + " - " + track.track_name)
+                        logging.info("Added new track " + track.track_artist + " - " + track.track_name)
                     else:
                         raise UniqueIndexException
 
                 except UniqueIndexException:
-                    print("Two matching tracks found, unique index error!")
+                    logging.info("Two matching tracks found, unique index error!")
 
                 except MySQLdb._exceptions.OperationalError as e:
                     if hide_errors:
-                        print("Could not add track {}".format(track))
+                        logging.info("Could not add track {}".format(track))
                     else:
                         raise e
 
             date.save(self.db)
-            print("Finished with dates " + date.get_start_date_string() + " to " + date.get_end_date_string())
+            logging.info("Finished with dates " + date.get_start_date_string() + " to " + date.get_end_date_string())
 
     # searches for new songs added to playlists and updates scrobble data
     def update_with_new_playlist_tracks(self):
@@ -88,7 +89,7 @@ class ProcessUpdatePlaylist:
                         matching_track.to_be_added = True
                         matching_track.spotify_uri = spot_track.spotify_uri
                         matching_track.save(self.db)
-                        print(matching_track.track_artist + " - " + matching_track.track_name + " set to be added to playlist")
+                        logging.info(matching_track.track_artist + " - " + matching_track.track_name + " set to be added to playlist")
                 # add new track, already to be added to playlist and update uri while available
                 elif len(matching_tracks) == 0:
                     new_scrobble_track = scrobble_objects.ScrobbleTrack(
@@ -98,13 +99,13 @@ class ProcessUpdatePlaylist:
                         spotify_uri=spot_track.spotify_uri)
                     self.ScrobbleData.append(new_scrobble_track)
                     new_scrobble_track.save(self.db)
-                    print("Added new track " + new_scrobble_track.track_artist + " - " + new_scrobble_track.track_name)
+                    logging.info("Added new track " + new_scrobble_track.track_artist + " - " + new_scrobble_track.track_name)
 
                 else:
                     raise UniqueIndexException
 
             except UniqueIndexException:
-                print("Two matching tracks found, unique index error!")
+                logging.info("Two matching tracks found, unique index error!")
 
     # evaluates tracks that should be added to playlist
     def update_tracks_to_be_added(self):
@@ -112,7 +113,7 @@ class ProcessUpdatePlaylist:
             if not track.to_be_added and not track.in_playlist and track.play_count >= play_count_to_be_added:
                 track.to_be_added = True
                 track.save(self.db)
-                print(track.track_artist + " - " + track.track_name + " set to be added to playlist")
+                logging.info(track.track_artist + " - " + track.track_name + " set to be added to playlist")
 
     # update uris of tracks to be added
     def update_uris(self):
@@ -121,9 +122,9 @@ class ProcessUpdatePlaylist:
                 track.spotify_uri = self.spotify.get_track_uri_from_track_name(track.track_artist + " " + track.track_name)
                 if track.spotify_uri is None:
                     track.spotify_uri = "FAILED"
-                    print("URI Error for " + track.track_artist + " - " + track.track_name)
+                    logging.info("URI Error for " + track.track_artist + " - " + track.track_name)
                 else:
-                    print("URI updated for " + track.track_artist + " - " + track.track_name)
+                    logging.info("URI updated for " + track.track_artist + " - " + track.track_name)
                 track.save(self.db)
 
     def recursive_add_tracks(self, scrobble_track_list):
@@ -142,7 +143,7 @@ class ProcessUpdatePlaylist:
             scrobble_track.in_playlist = True
             scrobble_track.save(self.db)
 
-        print("Adding to playlist...")
+        logging.info("Adding to playlist...")
         if len(uris_to_send) != 0:
             self.recursive_add_tracks(scrobble_track_list)
 
@@ -153,7 +154,7 @@ class ProcessUpdatePlaylist:
                 tracks_to_add.append(track)
 
         self.recursive_add_tracks(tracks_to_add)
-        print("Finished adding to playlist")
+        logging.info("Finished adding to playlist")
 
     def update_best_of_playlist(self):
         self.update_with_new_scrobble_tracks()

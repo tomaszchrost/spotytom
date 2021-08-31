@@ -1,7 +1,7 @@
 from src.spotify import Spotify
 from src.database import  Database
 import random
-
+import logging
 
 # uses other implemented tasks for carry out processes
 class ProcessSmartShuffle:
@@ -34,7 +34,7 @@ class ProcessSmartShuffle:
         queue_tracks = shuffle_tracks[:100]
 
         for track in queue_tracks:
-            print(f"Adding track {track.track_name}")
+            logging.info(f"Adding track {track.track_name}")
             self.spotify.add_tracks_to_playback([track.spotify_uri])
             track.shuffled = True
             self.db.save_scrobble_track(track)

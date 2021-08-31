@@ -2,6 +2,7 @@ import spotipy
 import authenticator
 import random
 import src.spotify.authentication as spotify_authentication
+import logging
 
 
 def get_track_artist(track):
@@ -130,7 +131,7 @@ class Spotify:
     # adds up to 100 tracks
     def add_tracks_max_100(self, uri_list):
         if len(uri_list) > 100:
-            print("Error, too many uris passed, max 100")
+            logging.info("Error, too many uris passed, max 100")
             return
 
         self.add_tracks(uri_list)

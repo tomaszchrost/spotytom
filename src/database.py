@@ -1,6 +1,7 @@
 import MySQLdb
 import authenticator
 import src.scrobble_objects as scrobble_objects
+import logging
 
 DBNAME = "spotytom"
 
@@ -83,12 +84,12 @@ class Database:
         self.db = mysql_connect_to_db()
 
     def initialise_date_table(self):
-        print("executing_date_table")
+        logging.info("executing_date_table")
         cursor = self.get_cursor()
         cursor.execute(f"CREATE TABLE {self.username}_scrobble_dates (start_date VARCHAR(255) NOT NULL, end_date VARCHAR(255) NOT NULL)")
 
     def initialise_track_table(self):
-        print("executing_track_table")
+        logging.info("executing_track_table")
         cursor = self.get_cursor()
         cursor.execute(f"""CREATE TABLE {self.username}_scrobble_tracks (
                        track_artist VARCHAR(255) NOT NULL,

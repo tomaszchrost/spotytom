@@ -5,7 +5,7 @@ import logging
 
 
 def main():
-
+    logging.basicConfig(filename='script.log', encoding='utf-8', level=logging.DEBUG)
     # for all users, loop through and try to update playlists if viable for update
     # get all users
     # check user has lastfm_username and spotify_refresh_token set
