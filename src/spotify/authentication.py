@@ -7,7 +7,7 @@ import base64
 SPOTIFY_API_BASE = 'https://accounts.spotify.com'
 SHOW_SPOTIFY_DIALOG = True
 SPOTIFY_WEB_REDIRECT_URL = "http://127.0.0.1:5000/spotify_callback"
-SCOPE = 'playlist-modify-public playlist-modify-private streaming user-read-currently-playing'
+SCOPE = 'playlist-modify-public playlist-modify-private streaming user-read-currently-playing playlist-read-private'
 
 
 def get_auth_url():

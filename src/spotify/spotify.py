@@ -53,12 +53,13 @@ class Spotify:
 
     # get playlist id from it's name
     def get_playlist_id(self, playlist_name):
-        playlists = self.user.user_playlists(self.username)
+        playlists = self.user.current_user_playlists(limit=None)
         playlist_id = ""
 
         for playlist in playlists['items']:
             if playlist['name'] == playlist_name:
                 playlist_id = playlist['id']
+
         return playlist_id
 
     # get name of the automated playlist maintained by spotytom

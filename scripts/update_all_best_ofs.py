@@ -2,10 +2,9 @@ from app.models import User
 from src.spotify.authentication import refresh_token
 from src.web_rows import process_update_playlist
 import logging
-
+from src import scrobble_objects
 
 def main():
-    logging.basicConfig(filename='script.log', encoding='utf-8', level=logging.DEBUG)
     # for all users, loop through and try to update playlists if viable for update
     # get all users
     # check user has lastfm_username and spotify_refresh_token set
@@ -19,7 +18,10 @@ def main():
                     spotify_access_token,
                     user.username,
                     user.lastfm_username)
-
+            #date = scrobble_objects.ScrobbleDate('1629633600', '1630238400')
+            #scrobbles = update_process.lastfm.get_scrobbles(date)
+            #for scrobble in scrobbles:
+            #    print(scrobble.track_artist)
             try:
                 update_process.update_best_of_playlist()
             except Exception:

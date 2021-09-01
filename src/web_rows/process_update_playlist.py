@@ -158,7 +158,7 @@ class ProcessUpdatePlaylist:
 
     def update_best_of_playlist(self):
         self.update_with_new_scrobble_tracks()
-        #self.update_with_new_playlist_tracks()
+        # self.update_with_new_playlist_tracks()
         self.update_tracks_to_be_added()
         self.update_uris()
         self.add_tracks_to_be_added_to_playlist()
