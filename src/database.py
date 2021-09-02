@@ -88,6 +88,11 @@ class Database:
         cursor = self.get_cursor()
         cursor.execute(f"CREATE TABLE {self.username}_scrobble_dates (start_date VARCHAR(255) NOT NULL, end_date VARCHAR(255) NOT NULL)")
 
+    def initialise_discover_playlist_table(self):
+        logging.info("executing_playlist_table")
+        cursor = self.get_cursor()
+        cursor.execute(f"CREATE TABLE {self.username}_discover_playlists (id VARCHAR(255) NOT NULL)")
+
     def initialise_track_table(self):
         logging.info("executing_track_table")
         cursor = self.get_cursor()
@@ -132,13 +137,17 @@ class Database:
 
         found_date_table = self.check_table_exists(f'{self.username}_scrobble_dates')
         found_track_table = self.check_table_exists(f'{self.username}_scrobble_tracks')
+        found_playlist_table = self.check_table_exists(f'{self.username}_discover_playlists')
         if not found_date_table:
             self.initialise_date_table()
         if not found_track_table:
             self.initialise_track_table()
+        if not found_playlist_table:
+            self.initialise_discover_playlist_table()
         found_date_table = self.check_table_exists(f'{self.username}_scrobble_dates')
         found_track_table = self.check_table_exists(f'{self.username}_scrobble_tracks')
-        if not (found_track_table and found_date_table):
+        found_playlist_table = self.check_table_exists(f'{self.username}_discover_playlists')
+        if not (found_track_table or found_date_table or found_playlist_table):
             raise TableSearchException
 
     def get_db_list(self):
@@ -156,6 +165,11 @@ class Database:
     def get_scrobble_tracks(self):
         cursor = self.get_cursor()
         cursor.execute(f"SELECT * FROM {self.username}_scrobble_tracks")
+        return cursor.fetchall()
+
+    def get_discover_playlists(self):
+        cursor = self.get_cursor()
+        cursor.execute(f"SELECT * FROM {self.username}_discover_playlists")
         return cursor.fetchall()
 
     def save_scrobble_date(self, scrobble_date):
@@ -183,4 +197,11 @@ class Database:
                scrobble_track.shuffled,
                scrobble_track.spotify_uri)
         cursor.execute(sql, val)
+        self.db.commit()
+
+    def save_discover_playlists(self, playlist_id):
+        cursor = self.get_cursor()
+
+        sql = f"""INSERT INTO {self.username}_discover_playlists (id) VALUES ({playlist_id})"""
+        cursor.execute(sql)
         self.db.commit()

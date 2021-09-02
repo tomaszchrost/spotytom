@@ -18,14 +18,11 @@ def main():
                     spotify_access_token,
                     user.username,
                     user.lastfm_username)
-            #date = scrobble_objects.ScrobbleDate('1629633600', '1630238400')
-            #scrobbles = update_process.lastfm.get_scrobbles(date)
-            #for scrobble in scrobbles:
-            #    print(scrobble.track_artist)
+
             try:
                 update_process.update_best_of_playlist()
-            except Exception:
-                logging.error(Exception)
+            except Exception as e:
+                logging.error(e)
 
 
 if __name__ == "__main__":

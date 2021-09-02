@@ -118,24 +118,28 @@ class Spotify:
         return new_tracks
 
     # add tracks to automated playlist, not used as want to be able to save between uri adds
-    def add_tracks(self, uri_list):
+    def add_tracks(self, uri_list, playlist_id=None):
+        # TODO dirty code, should be specified by web_row
+        if playlist_id is None:
+            playlist_id = self.get_automated_playlist_id()
+
         uris = uri_list[:100]
         uri_list = uri_list[100:]
         # handle local uris
         uris = [uri for uri in uris if "spotify:local" not in uri]
         if uris:
-            self.user.user_playlist_add_tracks(self.username, self.get_automated_playlist_id(), uris)
+            self.user.user_playlist_add_tracks(self.username, playlist_id, uris)
 
         if uri_list:
             self.add_tracks(uri_list)
 
     # adds up to 100 tracks
-    def add_tracks_max_100(self, uri_list):
+    def add_tracks_max_100(self, uri_list, playlist_id=None):
         if len(uri_list) > 100:
             logging.info("Error, too many uris passed, max 100")
             return
 
-        self.add_tracks(uri_list)
+        self.add_tracks(uri_list, playlist_id=playlist_id)
 
     # ------------------------------------------------------------------------------------------------------------
     # explore functions
