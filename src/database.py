@@ -196,8 +196,12 @@ class Database:
                scrobble_track.in_playlist,
                scrobble_track.shuffled,
                scrobble_track.spotify_uri)
-        cursor.execute(sql, val)
-        self.db.commit()
+        try:
+            cursor.execute(sql, val)
+        except Exception as e:
+            logging.error(e)
+        else:
+            self.db.commit()
 
     def save_discover_playlists(self, playlist_id):
         cursor = self.get_cursor()
