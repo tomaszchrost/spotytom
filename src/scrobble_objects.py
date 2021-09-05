@@ -44,11 +44,11 @@ def format_track_name(track_name):
 # object for ScrobbleTrack
 class ScrobbleTrack:
 
-    def __init__(self, lastfm_track=None, track_artist=None, track_name=None, play_count=0, to_be_added=False, in_playlist=False, shuffled=False, spotify_uri=None):
+    def __init__(self, lastfm_track=None, track_artist=None, track_name=None, play_count=0, to_be_added=False, in_playlist=False, shuffled=False, spotify_uri=None, in_discover_playlist=False):
         if lastfm_track is not None:
             formatted_track = format_track_name(lastfm_track.item)
-            self.track_artist = formatted_track[0]
-            self.track_name = formatted_track[1]
+            self.track_artist = formatted_track[0].lower()
+            self.track_name = formatted_track[1].lower()
             self.play_count = lastfm_track.weight
         else:
             self.track_artist = track_artist
@@ -56,6 +56,7 @@ class ScrobbleTrack:
             self.play_count = play_count
         self.to_be_added = bool(to_be_added)
         self.in_playlist = bool(in_playlist)
+        self.in_discover_playlist = bool(in_discover_playlist)
         self.shuffled = bool(shuffled)
         self.spotify_uri = spotify_uri
 

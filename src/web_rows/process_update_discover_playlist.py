@@ -45,13 +45,24 @@ class ProcessUpdatePlaylist:
         # filter out those already listened to
         for track in filtered_once_tracks:
             add_track = True
+            related_scrobble_track = None
             for scrobble_track in self.ScrobbleData:
                 if track.track_artist == scrobble_track.track_artist and track.track_name == scrobble_track.track_name:
-                    if scrobble_track.play_count >= play_count_to_be_removed:
+                    related_scrobble_track = scrobble_track
+                    if scrobble_track.play_count >= play_count_to_be_removed or scrobble_track.in_discover_playlist:
                         add_track = False
                         break
             if add_track:
-                filtered_twice_tracks.append(track)
+                if related_scrobble_track:
+                    filtered_twice_tracks.append(related_scrobble_track)
+                else:
+                    new_scrobble_track = scrobble_objects.ScrobbleTrack(
+                            track_name=track.track_name,
+                            track_artist=track.track_artist,
+                            spotify_uri=track.spotify_uri
+                    )
+                    filtered_twice_tracks.append(new_scrobble_track)
+                print(f'Adding {track.track_artist} - {track.track_name}')
         return filtered_twice_tracks
 
     def recursive_add_tracks(self, scrobble_track_list):
@@ -64,8 +75,16 @@ class ProcessUpdatePlaylist:
         uris_to_send = []
 
         for scrobble_track in scrobble_tracks:
+            if not scrobble_track.spotify_uri:
+                scrobble_track.spotify_uri = self.spotify.get_track_uri_from_track_name(scrobble_track.track_artist + " " + scrobble_track.track_name)
+                self.db.save_scrobble_track(scrobble_track)
             uris_to_send.append(scrobble_track.spotify_uri)
+
         self.spotify.add_tracks_max_100(uris_to_send, playlist_id=self.spotify.get_playlist_id(self.playlist_name))
+
+        for scrobble_track in scrobble_tracks:
+            scrobble_track.in_discover_playlist = True
+            self.db.save_scrobble_track(scrobble_track)
 
         logging.info("Adding to playlist...")
         if len(uris_to_send) != 0:

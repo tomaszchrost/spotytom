@@ -6,11 +6,11 @@ import logging
 
 
 def get_track_artist(track):
-    return track['artists'][0]['name']
+    return track['artists'][0]['name'].lower()
 
 
 def get_track_name(track):
-    return track['name']
+    return track['name'].lower()
 
 
 # get track uri from track object
@@ -79,6 +79,7 @@ class Spotify:
 
     # get songs from playlist id
     def get_songs_from_singular_playlist(self, playlist_id: int):
+
         new_tracks = []
         offset = 0
         finished_getting_tracks = False
@@ -131,7 +132,7 @@ class Spotify:
             self.user.user_playlist_add_tracks(self.username, playlist_id, uris)
 
         if uri_list:
-            self.add_tracks(uri_list)
+            self.add_tracks(uri_list, playlist_id=playlist_id)
 
     # adds up to 100 tracks
     def add_tracks_max_100(self, uri_list, playlist_id=None):
