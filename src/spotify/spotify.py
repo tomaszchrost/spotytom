@@ -23,7 +23,8 @@ def playlist_array_to_spotify_song_objects(playlist_array):
     spotify_song_objects = []
     for i, item in enumerate(playlist_array['items']):
         track = item['track']
-        spotify_song_objects.append(SpotifySong(track))
+        if track:
+            spotify_song_objects.append(SpotifySong(track))
     return spotify_song_objects
 
 
@@ -89,7 +90,6 @@ class Spotify:
                                                     fields='items',
                                                     limit=100,
                                                     offset=offset)
-
             new_tracks.extend(playlist_array_to_spotify_song_objects(tracks))
             # not max number, so must be the end
             if len(tracks['items']) != 100:
@@ -127,8 +127,8 @@ class Spotify:
         uris = uri_list[:100]
         uri_list = uri_list[100:]
         # handle local uris
-        uris = [uri for uri in uris if "spotify:local" not in uri]
         if uris:
+            uris = [uri for uri in uris if uri is not None and "spotify:local" not in uri]
             self.user.user_playlist_add_tracks(self.username, playlist_id, uris)
 
         if uri_list:
