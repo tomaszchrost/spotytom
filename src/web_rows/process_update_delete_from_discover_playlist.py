@@ -24,14 +24,13 @@ class ProcessDeleteFromPlaylist:
         if not playlist_id:
             return
         playlist_tracks = self.spotify.get_songs_from_singular_playlist(playlist_id)
-        uris_to_remove = []
+        ids_to_remove = []
         for track in playlist_tracks:
             for scrobble_track in self.ScrobbleData:
                 if track.track_artist == scrobble_track.track_artist and track.track_name == scrobble_track.track_name:
                     if scrobble_track.play_count >= play_count_to_be_removed:
-                        uris_to_remove.append(scrobble_track.spotify_uri)
-                        print(f"{track.track_artist} {track.track_name} to be deleted")
-                    else:
-                        print(f"{track.track_artist} {track.track_name} not to be deleted")
+                        track_id = scrobble_track.spotify_uri.split(':')[-1]
+                        ids_to_remove.append(track_id)
+                        print(f"{track.track_artist} {track.track_name} to be deleted: {track_id}")
                     break
-        self.spotify.user.user_playlist_remove_all_occurrences_of_tracks(playlist_id, uris_to_remove)
+        self.spotify.user.user_playlist_remove_all_occurrences_of_tracks(user=self.spotify.user.me(), playlist_id=playlist_id, tracks=ids_to_remove)

@@ -17,7 +17,7 @@ def main():
             try:
                 update_process.delete_from_playlist()
             except Exception as e:
-                logging.error(e)
+                print(user.username, e)
 
 
 if __name__ == "__main__":
