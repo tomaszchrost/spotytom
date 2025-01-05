@@ -23,6 +23,12 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    def set_spotify_refresh_token(self, refresh_token):
+        self.spotify_refresh_token = refresh_token
+
+    def set_lastfm_username(self, username):
+        self.lastfm_username = username
+
 
 @login.user_loader
 def load_user(id):

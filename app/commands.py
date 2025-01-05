@@ -34,6 +34,18 @@ def register_commands(app: Flask):
         db.session.add(u)
         db.session.commit()
 
+    @app.cli.command("modify-user-api-data")
+    @click.argument("username")
+    @click.argument("lastfm_username")
+    @click.argument("spotify_refresh_token")
+    def modify_user_api_data(username: str, lastfm_username: str, spotify_refresh_token: str):
+        u = User.query.filter_by(username=username).first()
+        u.set_spotify_refresh_token(spotify_refresh_token)
+        u.set_lastfm_username(lastfm_username)
+
+        db.session.add(u)
+        db.session.commit()
+
     @app.cli.command("delete-from-all-discovers")
     def delete_from_all_discovers():
         users = User.query.all()
