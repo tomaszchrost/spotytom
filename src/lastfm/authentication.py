@@ -25,7 +25,7 @@ def authorize(token):
         "token": token
     })
 
-    soup = BeautifulSoup(res.content, features="html.parser")
+    soup = BeautifulSoup(res.content, features="lxml")
 
     return soup.find('key').string, soup.find('name').string
 

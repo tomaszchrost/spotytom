@@ -15,3 +15,5 @@ login.login_view = 'login'
 logging.basicConfig(filename='full.log', encoding='utf-8', level=logging.DEBUG)
 
 from app import routes, models
+from app import commands
+commands.register_commands(app)
