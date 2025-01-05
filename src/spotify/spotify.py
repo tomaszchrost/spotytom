@@ -69,6 +69,7 @@ class Spotify:
 
     # get uri from a track name
     def get_track_uri_from_track_name(self, track):
+        track = track.replace("%", "")
         output = self.user.search(track, limit=1, offset=0, type='track', market=None)
         try:
             uri = get_track_uri(output["tracks"]["items"][0])
