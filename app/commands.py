@@ -6,7 +6,7 @@ from src.database import Database
 from src.lastfm import LastFM
 from src.spotify.authentication import refresh_token
 from src.web_rows import process_update_delete_from_discover_playlist, process_update_discover_playlist, \
-    process_update_playlist
+    process_update_playlist, process_last_tracks_of_album
 
 import logging
 
@@ -116,3 +116,15 @@ def register_commands(app: Flask):
                     for scrobble in scrobbles:
                         if scrobble.track_artist == artist_to_find:
                             print(scrobble.track_artist + ' - ' + scrobble.track_name + ' ' + str(scrobble.play_count))
+
+    @app.cli.command("create-playlist-of-last-tracks-on-album")
+    @click.argument("username")
+    def create_playlist_of_last_tracks_on_album(username: str):
+        u = User.query.filter_by(username=username).first()
+
+        spotify_access_token = refresh_token(u.spotify_refresh_token)
+        process = process_last_tracks_of_album.ProcessLastTracksOfAlbum(
+            spotify_access_token,
+            u.username)
+
+        process.add_last_tracks_of_album()
